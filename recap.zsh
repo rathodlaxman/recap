@@ -39,6 +39,31 @@ _recap_clean() {   # tidy the model output into clean Markdown
     }'
 }
 
+# --- drop "Worth noting" bullets that repeat the main points -------
+_recap_dedupe() {   # RECAP_OVERLAP = share of repeated words that counts as a repeat (default 0.6)
+  awk -v thr="${RECAP_OVERLAP:-0.6}" '
+    function norm(s,   t) { t = tolower(s); gsub(/[^a-z0-9 ]/, " ", t); return t }
+    function keep(w) { return (length(w) >= 4 || w ~ /[0-9]/) }
+    function addwords(s,   n, i, a) {
+      n = split(norm(s), a, " ")
+      for (i = 1; i <= n; i++) if (keep(a[i])) seen[a[i]] = 1
+    }
+    function overlap(s,   n, i, a, tot, hit) {
+      n = split(norm(s), a, " "); tot = 0; hit = 0
+      for (i = 1; i <= n; i++) if (keep(a[i])) { tot++; if (a[i] in seen) hit++ }
+      return (tot == 0) ? 0 : hit / tot
+    }
+    /^[[:space:]]*\*\*Worth noting\*\*[[:space:]]*$/ { inwn = 1; shown = 0; pend = 0; next }
+    inwn {
+      if ($0 ~ /^[[:space:]]*$/) next
+      if (overlap($0) >= thr) next
+      if (!shown) { print ""; print "**Worth noting**"; print ""; shown = 1 }
+      addwords($0); print; next
+    }
+    /^[[:space:]]*$/ { pend = 1; next }
+    { if (pend) print ""; pend = 0; addwords($0); print }'
+}
+
 _recap_flags() {   # --think=false only for models that accept it
   case "$1" in
     gemma4*|qwen*) print -r -- "--think=false" ;;
@@ -201,7 +226,7 @@ recaplong() {
     print ""
     ollama run --nowordwrap "${tf[@]}" "$model" \
       "$(_recap_prompt) The text below is a set of notes taken in order from a longer document, not the document itself. Summarise what the document says. $*" \
-      < "$notes" | _recap_clean
+      < "$notes" | _recap_clean | _recap_dedupe
   } | tee "$out"
 
   _recap_save "$out" "$title"
