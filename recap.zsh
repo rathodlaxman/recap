@@ -145,7 +145,47 @@ _recap_save() {
 
 alias recapc='recap | tee >(pbcopy)'
 
+# --- read one long text in parts, then combine (used by recaplong and recapall) ---
+_recap_long_core() {   # $1 = text file, $2 = title, rest = optional focus; summary goes to stdout
+  local src="$1" title="$2"; shift 2
+  local model="${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}"
+  local tmp notes f i=0 n words
+  local -a tf parts
+  tf=(${=$(_recap_flags "$model")})
+  tmp=$(mktemp -d); notes=$(mktemp)
+  words=$(wc -w < "$src" | tr -d ' ')
+
+  awk -v d="$tmp" -v max="${RECAP_CHUNK:-1200}" '
+    BEGIN{n=1; c=0}
+    { if (c + NF > max && c > 0) { n++; c=0 }
+      print > sprintf("%s/chunk_%03d.txt", d, n); c += NF }' "$src"
+
+  parts=("$tmp"/chunk_*.txt(N))
+  n=${#parts}
+  echo "Reading $words words in $n parts with $model. This takes roughly $((n*45)) seconds." >&2
+
+  for f in $parts; do
+    i=$((i+1))
+    echo "  part $i of $n..." >&2
+    print -r -- "--- Part $i ---" >> "$notes"
+    ollama run --nowordwrap "${tf[@]}" "$model" \
+"This is one part of a longer document. List everything it contains as short bullets: the facts, figures, names, dates, claims, arguments and quotes. Say exactly who said or did each thing. Keep names and numbers exactly as written and keep hedges such as 'possibly' or 'the best explanation is'. Do not summarise, shorten or add anything, and write no introduction." \
+      < "$f" >> "$notes"
+    print "" >> "$notes"
+  done
+
+  echo "  combining..." >&2
+  ollama run --nowordwrap "${tf[@]}" "$model" \
+    "$(_recap_prompt) The text below is a set of notes taken in order from a longer document, not the document itself. Summarise what the document says. $*" \
+    < "$notes" | _recap_clean | _recap_dedupe
+
+  mkdir -p "$RECAP_DIR"
+  cp "$notes" "$RECAP_DIR/$(date +%Y-%m-%d)-$(_recap_slug "$title")-notes.txt"
+  rm -rf "$tmp"; rm -f "$notes"
+}
+
 # --- several articles ----------------------------------------------
+# Articles over RECAP_LONG_WORDS (default 4000) are read in parts, like recaplong.
 recapall() {
   local tmp out f i=0 n words title
   local -a parts
@@ -169,17 +209,24 @@ recapall() {
     i=$((i+1))
     title=$(_recap_title "$f")
     echo "Article $i of $n - $words words" >&2
-    if (( words > 4000 )); then
-      echo "  Warning: article $i ($words words) is long for one pass; meaning can reverse above about 5,000 words. Check it against the source, or copy it alone and use recaplong." >&2
-    fi
     {
       print -r -- "## $title"
       print ""
-      ollama run --nowordwrap ${=$(_recap_flags "${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}")} \
-        "${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}" "$(_recap_prompt) $*" < "$f" | _recap_clean
+      if (( words > ${RECAP_LONG_WORDS:-4000} )); then
+        echo "  Long article: reading it in parts, as recaplong does." >&2
+        _recap_long_core "$f" "$title" "$@"
+      else
+        ollama run --nowordwrap ${=$(_recap_flags "${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}")} \
+          "${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}" "$(_recap_prompt) $*" < "$f" | _recap_clean
+      fi
       print ""
     } | tee -a "$out"
   done
+
+  if (( i == 0 )); then
+    echo "No article with at least 30 words found. Nothing saved; clipboard left unchanged." >&2
+    rm -rf "$tmp"; rm -f "$out"; return 1
+  fi
 
   pbcopy < "$out"
   _recap_save "$out" "batch-of-$i-articles"
@@ -189,52 +236,26 @@ recapall() {
 
 # --- long article or transcript (reads it in parts) -----------------
 recaplong() {
-  local tmp notes out f i=0 n words title chunk model
-  model="${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}"
-  local -a tf parts
-  tf=(${=$(_recap_flags "$model")})
-  tmp=$(mktemp -d); notes=$(mktemp); out=$(mktemp)
+  local tmp out title words
+  tmp=$(mktemp); out=$(mktemp)
 
-  pbpaste | tr -d '\r' > "$tmp/full.txt"
-  words=$(wc -w < "$tmp/full.txt" | tr -d ' ')
-  title=$(_recap_title "$tmp/full.txt")
+  pbpaste | tr -d '\r' > "$tmp"
+  words=$(wc -w < "$tmp" | tr -d ' ')
+  title=$(_recap_title "$tmp")
 
   if (( words < 20 )); then
     echo "Only $words words on the clipboard. Copy the text first." >&2
-    rm -rf "$tmp"; rm -f "$notes" "$out"; return 1
+    rm -f "$tmp" "$out"; return 1
   fi
 
-  awk -v d="$tmp" -v max="${RECAP_CHUNK:-1200}" '
-    BEGIN{n=1; c=0}
-    { if (c + NF > max && c > 0) { n++; c=0 }
-      print > sprintf("%s/chunk_%03d.txt", d, n); c += NF }' "$tmp/full.txt"
-
-  parts=("$tmp"/chunk_*.txt(N))
-  n=${#parts}
-  echo "Reading $words words in $n parts with $model. This takes roughly $((n*45)) seconds." >&2
-
-  for f in $parts; do
-    i=$((i+1))
-    echo "  part $i of $n..." >&2
-    print -r -- "--- Part $i ---" >> "$notes"
-    ollama run --nowordwrap "${tf[@]}" "$model" \
-"This is one part of a longer document. List everything it contains as short bullets: the facts, figures, names, dates, claims, arguments and quotes. Say exactly who said or did each thing. Keep names and numbers exactly as written and keep hedges such as 'possibly' or 'the best explanation is'. Do not summarise, shorten or add anything, and write no introduction." \
-      < "$f" >> "$notes"
-    print "" >> "$notes"
-  done
-
-  echo "  combining..." >&2
   {
     print -r -- "## $title"
     print ""
-    ollama run --nowordwrap "${tf[@]}" "$model" \
-      "$(_recap_prompt) The text below is a set of notes taken in order from a longer document, not the document itself. Summarise what the document says. $*" \
-      < "$notes" | _recap_clean | _recap_dedupe
+    _recap_long_core "$tmp" "$title" "$@"
   } | tee "$out"
 
   _recap_save "$out" "$title"
-  cp "$notes" "$RECAP_DIR/$(date +%Y-%m-%d)-$(_recap_slug "$title")-notes.txt"
-  rm -rf "$tmp"; rm -f "$notes" "$out"
+  rm -f "$tmp" "$out"
 }
 
 # --- email ----------------------------------------------------------
