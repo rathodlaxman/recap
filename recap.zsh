@@ -169,6 +169,9 @@ recapall() {
     i=$((i+1))
     title=$(_recap_title "$f")
     echo "Article $i of $n - $words words" >&2
+    if (( words > 4000 )); then
+      echo "  Warning: article $i ($words words) is long for one pass; meaning can reverse above about 5,000 words. Check it against the source, or copy it alone and use recaplong." >&2
+    fi
     {
       print -r -- "## $title"
       print ""
