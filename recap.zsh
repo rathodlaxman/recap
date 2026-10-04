@@ -2,7 +2,7 @@
 #  Recap - offline article summariser  (Ollama + Gemma 4)
 #  Add this block to ~/.zshrc, then run:  source ~/.zshrc
 #  Commands:  recap | recap short | recap changes | recaplong
-#             recapall | recapc | recapmail | recap help
+#             recapall | recapc | recapmail | recapurl | recap help
 # ============================================================
 
 RECAP_DIR="${RECAP_DIR:-$HOME/Summaries}"
@@ -61,7 +61,26 @@ _recap_dedupe() {   # RECAP_OVERLAP = share of repeated words that counts as a r
       addwords($0); print; next
     }
     /^[[:space:]]*$/ { pend = 1; next }
-    { if (pend) print ""; pend = 0; addwords($0); print }'
+    { if (pend) print ""; pend = 0; addwords($0); print }
+    END { print "" }'
+}
+
+# --- input and source helpers (used by recapurl) -------------------
+_recap_input() {   # RECAP_INPUT = read this file instead of the clipboard
+  if [[ -n "$RECAP_INPUT" ]]; then cat "$RECAP_INPUT"; else pbpaste; fi
+}
+
+_recap_src_line() {   # RECAP_SOURCE = address to show under the heading
+  if [[ -n "$RECAP_SOURCE" ]]; then
+    print -r -- "Source: $RECAP_SOURCE"
+    print ""
+  fi
+}
+
+_recap_msg() {   # screen messages: each argument on its own line, then a blank line (stderr only)
+  if [[ "$1" == "-b" ]]; then [[ -z "$RECAP_NO_LEAD" ]] && print -u2 ""; shift; fi   # -b: also a blank line before
+  print -u2 -rl -- "$@"
+  print -u2 ""
 }
 
 _recap_flags() {   # --think=false only for models that accept it
@@ -92,6 +111,7 @@ recap() {
   recapall            several articles separated by lines containing only @@@@
   recapc              same as recap, and also copies the summary to the clipboard
   recapmail           short email summary: sender, tasks, deadlines, reply needed
+  recapurl "ADDRESS"  fetch a web article and summarise it (quote the address; not video, audio or PDF)
   RECAP_MODEL=gemma-sum recap    use a different model for one run
   Summaries are saved as Markdown in ~/Summaries
 EOT
@@ -101,20 +121,20 @@ EOT
   esac
 
   tmp=$(mktemp)
-  pbpaste | tr -d '\r' > "$tmp"
+  _recap_input | tr -d '\r' > "$tmp"
   words=$(wc -w < "$tmp" | tr -d ' ')
   title=$(_recap_title "$tmp")
 
   if (( words < 20 )); then
-    echo "Only $words words on the clipboard. Copy the article first." >&2
+    _recap_msg -b "Only $words words on the clipboard. Copy the article first."
     rm -f "$tmp"; return 1
   fi
 
-  echo "Reading $words words with $model. Options: short | changes | help | or your own focus in quotes" >&2
+  _recap_msg -b "Reading $words words with $model." "Options: short | changes | help | or your own focus in quotes"
   if (( words > 4000 )); then
-    echo "Note: $words words is long for one pass. Accuracy drops above about 2,500 words - consider recaplong." >&2
+    _recap_msg "Note: $words words is long for one pass." "Accuracy drops above about 2,500 words. Consider recaplong."
   elif (( words > 2500 )); then
-    echo "Note: over 2,500 words. recaplong will be more accurate if this matters." >&2
+    _recap_msg "Note: over 2,500 words." "recaplong will be more accurate if this matters."
   fi
 
   local out
@@ -122,6 +142,7 @@ EOT
   {
     print -r -- "## $title"
     print ""
+    _recap_src_line
     ollama run --nowordwrap "${tf[@]}" "$model" "$base $extra" < "$tmp" | _recap_clean
   } | tee "$out"
 
@@ -140,7 +161,7 @@ _recap_save() {
     file="$RECAP_DIR/$(date +%Y-%m-%d)-$slug-$n.md"; n=$((n+1))
   done
   cp "$out" "$file"
-  echo "Saved: $file" >&2
+  _recap_msg "Saved:" "  $file"
 }
 
 alias recapc='recap | tee >(pbcopy)'
@@ -162,7 +183,7 @@ _recap_long_core() {   # $1 = text file, $2 = title, rest = optional focus; summ
 
   parts=("$tmp"/chunk_*.txt(N))
   n=${#parts}
-  echo "Reading $words words in $n parts with $model. This takes roughly $((n*45)) seconds." >&2
+  _recap_msg "Reading $words words in $n parts with $model." "This takes roughly $((n*45)) seconds."
 
   for f in $parts; do
     i=$((i+1))
@@ -174,7 +195,7 @@ _recap_long_core() {   # $1 = text file, $2 = title, rest = optional focus; summ
     print "" >> "$notes"
   done
 
-  echo "  combining..." >&2
+  _recap_msg "  combining..."
   ollama run --nowordwrap "${tf[@]}" "$model" \
     "$(_recap_prompt) The text below is a set of notes taken in order from a longer document, not the document itself. Summarise what the document says. $*" \
     < "$notes" | _recap_clean | _recap_dedupe
@@ -199,22 +220,25 @@ recapall() {
   parts=("$tmp"/part_*.txt(N))
   n=${#parts}
   if (( n == 0 )); then
-    echo "Nothing found on the clipboard." >&2; rm -rf "$tmp" "$out"; return 1
+    _recap_msg -b "Nothing found on the clipboard."; rm -rf "$tmp" "$out"; return 1
   fi
-  (( n == 1 )) && echo "Only one article found. Put @@@@ alone on a line between articles." >&2
+  (( n == 1 )) && _recap_msg -b "Only one article found." "Put @@@@ alone on a line between articles."
 
   for f in $parts; do
     words=$(wc -w < "$f" | tr -d ' ')
     (( words < 30 )) && continue
     i=$((i+1))
     title=$(_recap_title "$f")
-    echo "Article $i of $n - $words words" >&2
+    if (( i == 1 && n > 1 )); then _recap_msg -b "Article $i of $n - $words words"; else _recap_msg "Article $i of $n - $words words"; fi
+    if (( words > ${RECAP_LONG_WORDS:-4000} )); then
+      _recap_msg "Long article: reading it in parts, as recaplong does."
+      _recap_long_core "$f" "$title" "$@" > "$tmp/long-summary.txt"
+    fi
     {
       print -r -- "## $title"
       print ""
       if (( words > ${RECAP_LONG_WORDS:-4000} )); then
-        echo "  Long article: reading it in parts, as recaplong does." >&2
-        _recap_long_core "$f" "$title" "$@"
+        cat "$tmp/long-summary.txt"
       else
         ollama run --nowordwrap ${=$(_recap_flags "${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}")} \
           "${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}" "$(_recap_prompt) $*" < "$f" | _recap_clean
@@ -224,14 +248,15 @@ recapall() {
   done
 
   if (( i == 0 )); then
-    echo "No article with at least 30 words found. Nothing saved; clipboard left unchanged." >&2
+    if (( n > 1 )); then _recap_msg -b "No article with at least 30 words found." "Nothing saved; clipboard left unchanged."
+    else _recap_msg "No article with at least 30 words found." "Nothing saved; clipboard left unchanged."; fi
     rm -rf "$tmp"; rm -f "$out"; return 1
   fi
 
   pbcopy < "$out"
   _recap_save "$out" "batch-of-$i-articles"
   rm -rf "$tmp"; rm -f "$out"
-  echo "Done. All summaries are also on your clipboard." >&2
+  _recap_msg "Done. All summaries are also on your clipboard."
 }
 
 # --- long article or transcript (reads it in parts) -----------------
@@ -239,23 +264,180 @@ recaplong() {
   local tmp out title words
   tmp=$(mktemp); out=$(mktemp)
 
-  pbpaste | tr -d '\r' > "$tmp"
+  _recap_input | tr -d '\r' > "$tmp"
   words=$(wc -w < "$tmp" | tr -d ' ')
   title=$(_recap_title "$tmp")
 
   if (( words < 20 )); then
-    echo "Only $words words on the clipboard. Copy the text first." >&2
+    _recap_msg -b "Only $words words on the clipboard. Copy the text first."
     rm -f "$tmp" "$out"; return 1
   fi
 
+  [[ -z "$RECAP_NO_LEAD" ]] && print -u2 ""
+  local sumf; sumf=$(mktemp)
+  _recap_long_core "$tmp" "$title" "$@" > "$sumf"
   {
     print -r -- "## $title"
     print ""
-    _recap_long_core "$tmp" "$title" "$@"
+    _recap_src_line
+    cat "$sumf"
   } | tee "$out"
 
   _recap_save "$out" "$title"
-  rm -f "$tmp" "$out"
+  rm -f "$tmp" "$out" "$sumf"
+}
+
+# --- web page: fetch, clean, summarise ------------------------------
+# Exit codes of _recap_fetch: 2 no response, 3 no article text, 4 HTTP error (http=NNN),
+# 5 redirected to a login page. Other lines on stdout: paywall=1  cutoff=1
+_recap_fetch() {   # $1 = address, $2 = output file
+  python3 - "$1" "$2" <<'PY'
+import re
+import sys
+import trafilatura
+from trafilatura import downloads
+
+url, out = sys.argv[1], sys.argv[2]
+html, final = None, url
+try:
+    resp = downloads.fetch_response(url, decode=True)
+except Exception:
+    resp = None
+    html = trafilatura.fetch_url(url)
+if resp is not None:
+    if resp.status != 200:
+        print(f"http={resp.status}")
+        sys.exit(4)
+    html, final = resp.html, (resp.url or url)
+if not html:
+    sys.exit(2)
+if re.search(r"/(login|log-in|signin|sign-in|subscribe|register|paywall)\b", final.lower()) and final != url:
+    print(f"final={final}")
+    sys.exit(5)
+
+text = trafilatura.extract(html, url=url, include_comments=False)
+if not text:
+    sys.exit(3)
+meta = trafilatura.extract_metadata(html)
+title = ((meta.title if meta else "") or "").strip()
+author = ((meta.author if meta else "") or "").strip()
+body = text.strip()
+if title and not body.lower().startswith(title.lower()):
+    body = title + "\n\n" + body
+if author and author.lower() not in body[:400].lower():
+    first, _, rest = body.partition("\n")
+    body = first + "\n\nBy " + author + "\n" + rest
+with open(out, "w", encoding="utf-8") as f:
+    f.write(body.strip() + "\n")
+
+if re.search(r'"isAccessibleForFree"\s*:\s*"?false"?', html, re.I):
+    print("paywall=1")
+# A cut-off teaser: the text ends mid-sentence AND the page has subscription wording.
+# (A missing final full stop alone is common on free pages, so it is not enough.)
+last = text.strip().splitlines()[-1].strip()
+gate = re.search(
+    r"already (have an account|a subscriber|a member)|sign up to get access|to continue reading"
+    r"|subscribe to (continue|read|unlock)|unlock (this|the full)|members[- ]only",
+    html, re.I)
+if gate and len(last) >= 60 and last[-1].isalnum():
+    print("cutoff=1")
+PY
+}
+
+# recapurl "ADDRESS" [short | changes | "focus text"]
+# Pages over RECAP_LONG_WORDS (default 4000) are read in parts, like recaplong.
+# The extracted text is saved as ~/Summaries/DATE-title-source.txt so you can check the summary against it.
+recapurl() {
+  local url="$1" tmp info code words title slug srcfile http_status final cutoff=0 paywall=0 src_note
+  if [[ -z "$url" || "$url" == help || "$url" == -h || "$url" == --help ]]; then
+    _recap_msg -b "Usage: recapurl \"ADDRESS\" [short | changes | \"focus text\"]" "Put the address in quotes (addresses with ? or & break otherwise)."
+    _recap_msg "Fetches a web article, strips menus and ads, and summarises it." "Not for video, audio or PDF." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
+    [[ -z "$url" ]] && return 1
+    return 0
+  fi
+  shift
+  [[ "$url" == http://* || "$url" == https://* ]] || url="https://$url"
+
+  case "${url:l}" in
+    *youtube.com/*|*youtu.be/*|*vimeo.com/*|*spotify.com/*|*podcasts.apple.com/*|*soundcloud.com/*|*.mp3|*.mp4|*.m4a|*.wav|*.mov|*.webm)
+      _recap_msg -b "That looks like a video or audio link." "recapurl reads web articles only."
+      return 1 ;;
+    *.pdf)
+      _recap_msg -b "That looks like a PDF." "recapurl reads web pages only. Copy the text and use recap."
+      return 1 ;;
+  esac
+
+  python3 -c 'import trafilatura' 2>/dev/null || {
+    _recap_msg -b "trafilatura is not installed." "Run this, then try again:" "  python3 -m pip install trafilatura"
+    return 1
+  }
+
+  tmp=$(mktemp)
+  _recap_msg -b "Fetching:" "  $url"
+  info=$(_recap_fetch "$url" "$tmp"); code=$?
+  http_status=$(print -r -- "$info" | sed -n 's/^http=//p' | head -1)
+  final=$(print -r -- "$info" | sed -n 's/^final=//p' | head -1)
+  [[ "$info" == *cutoff=1* ]] && cutoff=1
+  [[ "$info" == *paywall=1* ]] && paywall=1
+
+  case $code in
+    0) ;;
+    2) _recap_msg "No response from the site." "Possible causes: a network, security-certificate or timeout problem." "Nothing summarised."
+       rm -f "$tmp"; return 1 ;;
+    4) case "$http_status" in
+         401|403|429) _recap_msg "The site answered with HTTP $http_status instead of the page." "That usually means it blocks automated downloads or needs a login." "Copy the text and use recap." ;;
+         404|410) _recap_msg "The site answered with HTTP $http_status instead of the page." "That usually means the address is wrong or the page was removed." ;;
+         *) _recap_msg "The site answered with HTTP $http_status instead of the page." "Try again later, or copy the text and use recap." ;;
+       esac
+       rm -f "$tmp"; return 1 ;;
+    5) _recap_msg "The site redirected to a login or subscribe page:" "  $final" "Nothing summarised."
+       rm -f "$tmp"; return 1 ;;
+    3) _recap_msg "No article text found on that page." "It may need a login or be built with scripts." "Nothing summarised."
+       rm -f "$tmp"; return 1 ;;
+    *) _recap_msg "Could not read the page (error $code)." "Nothing summarised."
+       rm -f "$tmp"; return 1 ;;
+  esac
+
+  words=$(wc -w < "$tmp" | tr -d ' ')
+  title=$(_recap_title "$tmp")
+  slug=$(_recap_slug "$title"); [[ -z "$slug" ]] && slug="page"
+  mkdir -p "$RECAP_DIR"
+  srcfile="$RECAP_DIR/$(date +%Y-%m-%d)-$slug-source.txt"
+  { print -r -- "Source: $url"; print ""; cat "$tmp"; } > "$srcfile"
+
+  if [[ "$RECAP_URL_FORCE" != 1 ]]; then
+    if (( words < ${RECAP_URL_MIN:-150} )); then
+      _recap_msg "Only $words words came back." "The page may be paywalled, need a login or be mostly scripts." "Nothing summarised."
+      _recap_msg "Extracted text saved so you can look:" "  $srcfile"
+      rm -f "$tmp"; return 1
+    fi
+    if (( paywall )); then
+      _recap_msg "Stopped: the page marks its article as paywalled (members only)." "What came back is probably a teaser or a subscription notice." "Nothing summarised."
+      _recap_msg "Extracted text saved so you can look:" "  $srcfile"
+      _recap_msg "To summarise it anyway, run:" "  RECAP_URL_FORCE=1 recapurl \"$url\""
+      rm -f "$tmp"; return 1
+    fi
+  fi
+  _recap_msg "Fetched $words words." "Extracted text saved to:" "  $srcfile"
+  _recap_msg "Text starts:" "  $(head -c 160 "$tmp" | tr '\n' ' ')"
+
+  src_note="$url"
+  if (( cutoff )); then
+    _recap_msg "Warning: the text ends mid-sentence." "The page may be a paywalled teaser, so the summary may cover only part of the article."
+    src_note="$url (text appears cut off: possibly a paywalled teaser)"
+  fi
+
+  if (( words > ${RECAP_LONG_WORDS:-4000} )); then
+    case "$1" in
+      short|changes)
+        _recap_msg "'$1' only applies under ${RECAP_LONG_WORDS:-4000} words." "Summarising in parts without it."
+        shift ;;
+    esac
+    RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recaplong "$@"
+  else
+    RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recap "$@"
+  fi
+  rm -f "$tmp"
 }
 
 # --- email ----------------------------------------------------------
