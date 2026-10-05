@@ -1,156 +1,175 @@
-# Recap
+%PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
+1 0 obj
+<<
+/F1 2 0 R /F2 3 0 R /F3 4 0 R
+>>
+endobj
+2 0 obj
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
+endobj
+3 0 obj
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
+endobj
+4 0 obj
+<<
+/BaseFont /Courier /Encoding /WinAnsiEncoding /Name /F3 /Subtype /Type1 /Type /Font
+>>
+endobj
+5 0 obj
+<<
+/Contents 14 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 13 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
 
-A local article summariser for macOS. Copy an article (or give a web address), type one word, read the gist.
+>> 
+  /Type /Page
+>>
+endobj
+6 0 obj
+<<
+/Contents 15 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 13 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
 
-Everything is summarised on the machine through [Ollama](https://ollama.com), so no article text is sent to any AI service. The clipboard commands (`recap`, `recaplong`, `recapall`, `recapmail`) work without a network connection. The address commands (`recapurl`, `recapurls`) need one, because they first fetch the page or the YouTube captions. Built and tuned on a MacBook Air M1 with 8 GB of RAM.
+>> 
+  /Type /Page
+>>
+endobj
+7 0 obj
+<<
+/Contents 16 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 13 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
 
-## What it does
+>> 
+  /Type /Page
+>>
+endobj
+8 0 obj
+<<
+/Contents 17 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 13 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
 
-| Command | What it does |
-| --- | --- |
-| `recap` | Adaptive summary of whatever is on the clipboard: gist, main points, and "Worth noting" only if there is more |
-| `recap short` | One sentence plus up to three takeaways |
-| `recap changes` | For circulars and rule changes: which clauses are new, which are unchanged, who acts and from when |
-| `recap "focus on costs"` | Summary with a focus you choose |
-| `recaplong` | Long articles and transcripts: reads the text in parts, then combines. Slower but far more accurate |
-| `recapall` | Several articles in one run, separated by lines containing only `@@@@`. An article over 4,000 words is read in parts automatically |
-| `recapc` | Same as `recap`, and also copies the summary to the clipboard |
-| `recapmail` | Short email summary: sender, tasks, deadlines, whether a reply is needed |
-| `recapurl "ADDRESS"` | Fetches a web article, or the captions of a YouTube video, and summarises it |
-| `recapurl "A" "B"` | Several addresses in one run. `--single` saves one combined file, `--separate` one file each |
-| `recapurls` | Summarises every web address on the clipboard, one per line (same flags) |
-| `recap help` | Lists the options |
+>> 
+  /Type /Page
+>>
+endobj
+9 0 obj
+<<
+/Contents 18 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 13 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
 
-Every summary is written as Markdown to `~/Summaries/YYYY-MM-DD-title.md` and printed on screen.
+>> 
+  /Type /Page
+>>
+endobj
+10 0 obj
+<<
+/Contents 19 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 13 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
 
-## Setup
+>> 
+  /Type /Page
+>>
+endobj
+11 0 obj
+<<
+/PageMode /UseNone /Pages 13 0 R /Type /Catalog
+>>
+endobj
+12 0 obj
+<<
+/Author (Laxman) /CreationDate (D:20261005032835+00'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20261005032835+00'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (Recap \204 Local Summariser Manual) /Trapped /False
+>>
+endobj
+13 0 obj
+<<
+/Count 6 /Kids [ 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R ] /Type /Pages
+>>
+endobj
+14 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 3135
+>>
+stream
+Gatm=?#SK-&q/*0(_g'ph6dtp?^=p_6^fpP]kB=[1lGgo!"2u)@r5aR.oC;7+832$),_Q")ma[f#)sL(dL9auLNAIm\G3u6mplmsl5%Yt)))S=QbWYMJD5;;k4[l.'@pJ-c5bI-,7eBBcgg%@N;);_%eEd>c,!hN4,X2[kg)5?lM^pYaa,c<^bqSMJBc/ga2l'\NC\:#GFgaGG;A,;Ht_)H?=gOCi//<[c_&,Bhf/HKq=6WH4QT?MmeRU$H0!!'"Mr:kdBCp9$20';/2RhkR-Q&Fg7M"7EsDIsQc4A3k'>emRqd.LGN5J<XEg,lP+ihs+F,9p".X#6)E*-`hS(c&>j"+SF8,pq$=#4gLM"/pSh?KV;4/tMa9qN4kC</>!kIBk87>ZC2>hejF&c\@pF*$[DZJ\b-P4.;U;1i`kSo-:chlW`I0#9"ZH`<8(P:\Z@2sXP`$WX!8([49bm^7eFI<4Q='S$l6S0!/j^J1VK8*h@UA:tbH0EKT#5F#doC4V'o,;BJhW=u*"EPZ^/B4X)o&gZf5L)6diU%,ch?Pua?L3?c6/$CsDOGT"4kZM)5>&!f/refo(t7,UHn>nU3GoqUbX&kT5OK`Q2cV;BEB&Z^a5-3m`]g_Pfkh%2>ZlIPqLV']^YF'l/]^7D/Xn4%OCpPm%D&kZ]jVH;]-frhRIkW4dasLf<4BbUZMsp)-.\$\q>Ak[1]PgZDZij%XTTnp<\>Z$;NMW4fSB_#1p'/O&,t*bV:O#:oBcZqr[>#7<=c(a*!RTJ4W=nKm=?Eq=NW`@PoUqk)ZKK42gtBIrgR5"9jbZ,W_DNk=f:tpq6OT0nA@VR]YWUBKrQSDr+jMXQNC9$\U]sDqH\Ei)^X*<.!3HK3&b!:]CEnRQMMKteV")P4t-qu[7j#L0L^rUSPIEVE7?7Xp\\TPK0D'TNnT"l>"BrS]#k3^Fu4pa<i(.(:P1*J':hh9OuGB^BEs6<FO<(XKr-JoO?j#Y)Zn(q7>u9Fg]s^u\\,Je!or;Ki@QBQ2!_mhoa/qi095qSjm!*/.8l%\Ws0(jfCA3`)K?@e(JRnd6@mhL>Ea=;D?qN3Fao#%QoTTlrXVY:kMtqg*ApHj24:c_bMd=?25'Y!ke@CX"SV@>M1fAZ2l=pQ<!1mXddIhC7kL$$%NMtQ:qf@B$`rf.<nP!<&0a#Q$CUWr:#X_/p[SG_jG-mE1SQrQX%[*S$7+7-:LI&iXJhDcei7Bc5i@^cJYjI%j1Xpuef9W^neJ@_Zbm^D&M53^Fg(N3%LRR4E&=oi[q^U2XQ7J*^DHT5F[WR9i`Ml[aa=.ofr/L+VDq`.8X5QUb0+T&jgIjL=gPOQU>o0kY^-4B#jRdgO`1+r&96i7F8DcC01L.bNi9XHi9n-c]Hrlb$S5+2cZ<2ta0NM5%P/KEe+^%!T*k4?nc.Jo:>AGBYtr"E5Dc]NE:`eA$"25'`jKE<1s4d0SordJGAkLW\]0$ojddHUj)u2.h(4Jr=W6t>IaH@!W1S50CYdt'=k$4+TUQ>LFq+c5>gPJGFM9Q,]/3*OK;ZG%ejQ.dm-f]tJfos;,!j"V%dRj*^@$WO+$g#k,<#r22k\`VH&bZSl/e8LJ3t_V[DDtO9pp$<-6Z;F*m+uV]UrL+jp@s681J27k;s\bHVnS@'X>-cL3J?4TpBlLf;=nMQV(3rj?2'(Ma`ik.;UcI3aa;N5$3[?V[o?QJEMaXgkf4A$D)22[V`PEHX'`K3fsN"$0/7(['[3&eH<nSP5+4`]q)RW*ORk,i''Ou:^En9__]&@4];uZ67"/[[`!JL_9Y>WF,SQN*j\g:lup#[n2WspdR4YU)fS7#ZDE3+A=H_:Op7)3'2-uHoarEBBJXGdd/&`!q78I!+AA.3G)46\f_q0qjZ2fKUUu6"VJ5[gK@o^Sej-p:1]L-k2#De]#8SiI&;LWrDP<t7GGc8CoTtKJk7aqNU4?H6r;t<MLY8!1cuk3?.T-LhnW.6^eOn:VNG-Pi![I`<7CQN>E+X[b^fBfa\eVZ.9('"rdQALo_\"%4%k+K[:`?ce[KuMZJ=.:TQVr1`'2L3<o_`rCFqWKg'lqW*(iZSg&R%W^AijbZ#;1kj=A[EqKOI-&^oI0($=Q's!JPJ.N(-`!9Z@S:#d\O<);/"U.P6VdF[OPiI>P*mp&tXjG<q"@cZr-Jl;;Y2IA,&b]C#Ks`bl`2-T5V#&3S@U71B#7AVIoN,dlb/G@2>TCe8S6J7M$*ZBgbUlh$3<FR5-BHA0)dj#<^WCXP)&o8=e);!(K3a"8;D4t-CQ31X3\e[s_Bi&nPr3WQ9tBCfHuGS2.]@65FEemZ39eZ,`F[Dp555M&Y[aL=r+"k$!.TgBEqn8<mo:)-`f(Ke7`4SQ,;_P.o?g6,N&5Q[N&fWQeEU0'OLG%)#:XL#,D'8gQ^+"sd`fJFjVPr(M)9O+VF(S)XD"I@nUe?E(eGj$D5*E%,$L8tk)ICo<0n*$2!'5h^$b;UpXlNWD6Sg^q]om<tRVSj83E'/GbUASgVP=?XWM6'_UbT?0ac"$KKJQ@3@!=-nAc>Br\o)`+QFLu7CQ2">@=;"%[U&(["dS.b4j8!,U8\,t(W1-j0p&L(cmK:-Oj)rsf'1B4gS]ER%#sm2-@---i%q8PBa5c_ra);L1L^$)"7o:G?mY`1<14$o^04Ecm^-t9t@6X7u7pP1Z9/#Y$-]Z1s<TiKjQO1Q?T*^&\)SRb(8:CaiU^<35iA/b$C>(Pe&d(';f_+^Y;V70sCbkAO^UZKIk4<6Tm$0`TiR-mQgnXOU1EdES)d+2i=p(ti/6J%=!HVX0-.7`,^!@bS/)'#@eMdr@,OnBWV_F^AqC8$AJ`Oc_;Ldc)AQR<+16s.'1b\fN?HdSklV#esa.^FbC5V\d3:fU'&$>]/mUF3mkYLkLKpG;V*e8*E8uJ3=o`Oo$BhLM[/,'[grBa/B2Oo`gi6@aLoCm`??,(j[maqGd(4;Z%NN.tJR7agI;Wq20LB!I%W`oRW$qU[lK76Kq7Aeo+TK)dA7I=a]<7K6sgXffG)=+HC;*Q"E]a!fiBWse+_=$Neo3PLhmqAq&-`kapT+*hqPt$C4lh5Yli#1dZm493(Lc\a"*jjn1F"86CniQIBNqM7RB:I.>9^&g@P>Q,SjSpXD_fl~>endstream
+endobj
+15 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 3512
+>>
+stream
+GauHMCN%rs(B*Z.EKOWFG#tD,ML)g;['&f'=enb1CE"g4TGU6FM)!+\32BRAL]7!1G@jB//1GUKXGt0HE#s5k4nm_:I;7`m2uepPU*#/4rlQTQT]).5cjOR_L2M_nT2'bmZf?C]]@WreVrtJbK0GU[WAj#DK?u"DmIn//r9]6P<gWC18W%*H/qnp92>o`#P,@-,[*3E4=rl6N#6p6MUVQUbmLVVP45Bp_I^dknLZJ!WIb/Gsf2i9_@$k?ZJGT0U)uI;<l'4jRO\X28plU<gn3OhJGBK;1He.4@bXFfp5nbR;hD77Cro+%YXTNW)()bA.S/o9%o,[TQdY4Q-/kKVCUs`Q#r"o?\4Rr:IT\Jaqf5EHCn@-m8#9ge\kl`,5<%(<H:@KF(>;HK%,kb(mdP:nA[f\bM9\NUi?Wq?OT%^3">+>D-bjp*uPX!Y:ns>X]FAm\D[Ud^""mp1-f*H0DfKCApGeMgT2H9'f]IrO(&%jg$QutT#NUO=kSIT(YBp@q8i[C'$\dO,`HRU:=3hp%rU%4&S$X+PZLCG0&'QXp^$\mh2BEDk)17&Z8?;HP8a/Vh<QW!RFQ)f#HX0O%.R>=b%L5L'Z:Wan68Q7$$SOTl[.+JJr-8dYR+Me5L)<\3Wp*-EfaDCQGqWjZ<Gf?;/S)LMrb!MoYb7(ni-@5RFC8L7#f(JG;/Uu"^Se#uP3om\Q$rGjr4OtB4Ef"u$o'?ZVQ,Xp"*o4sDR>[G#?:<gUC1r9".VYdDcJCk*n_Mm]"n)Y4Dm10+h9bIP)'lCa'(c3,+P(jk1'(#cF'IifJK%YcMJ"`6fTHi:>V/i'Q5O;818c3b8$c1T9$SW3ZcE[PfeV"3RG3qO9')[\7tHUjWu=82i;0opTn#hplX&]_8l\1%As61h042G0cj2Z`1!*Z(\4rBAP\0+o$:<'=*rT0:"`2!FHh8qW>16J,q8['ar4-k=jCML8]`g3ZBH(Z-,KB=IEf0M3"`OX5M-L`M?@$^]erpf05[gG<C0;Y><B3,G+Fs\mW[J7?#gC;>9-Y/kE`q_Ga:cDj9F0TREd'!&W[oRbi)"YR2U-2sh[$5L=PK;;@+Nm!>4%A=JP2f]4N'::%i6%D$DR)c&h-`Rm'jA.j12s!ZT*sX8?do-q6k(Q^U^q'pW&c4^]*lGLUZ`UD]e63160n:g+@o1#-A?^;jA^\G;4o`QSL?ErZ]?-(?40Zf-4dG3L`Uk,.t%n6B^Z30`j+>k>8SJ_[80<##Ffo8u.GRF%_ii&5$RHXsH8=:YqFl&O>@8Ck\\fernFTXP(U5P`:n-hH<"%:pbIt&q5Cu9\;;+;oA01%V`G=2lR,*YW+7"<OksuX]XVQPuFcR%q,L+W>%HbaFJc[&d6'026^jmjZ#^`c#,W+pqm_Sl@[RWg/WYhH&TK7K>Z*De*X;NU0g@ITgp3c#i7S*\C,k+3@mZ9Pjbb^l&*=#4EgJ<-[cDkGM9`i+ELfE<T0pc70P6(q0&,_g+?^K#0ikIMfgbB0_]k#X>H1b!+uYQUu`Rk!'#>cm6lBgLM.l3K6^Pfm?r<9^-$OB]>l8j40ZS9R=eUSL1P.l1^#0*']UB,.\Wt@L=m'0^ip+oO]2(rQ5dNOB*o,%#b^"Nq>/%@UIuq(rYpI0PSpJLjQ%=Prb1&/I;?AOp"5(!)K<p'P'".OMg801qVqDm3_;(P6=?R0k@?5(A&-+V`F@dX&HlJdZXgnJrr'`Y^V@LsH2II7d*hTN1'.7EZH74/K"oU7_'uW%'>9iYjM'.Rkf$M\9>b1JKed)W1!QR"EWM`%)hB&:m!_h`eDo@AmJ(tk37Yk<&YV)kQ#[l(Lp-ot:\th'0HASMgcY[u)XNIr6-gKd`e`Q/(_IuE5eJY+Fhd'00N$p;$N*l'U@P(e4SmK$K^4UX,DnIhe+`48J#<lVOa@.&bBs?Z"S$Kie5c?KX__g,#k1J>=D+(c'(iA%r&#Y,1)+s7q_Le3cM/[I:La5=Q9[&fM4-uZd`BqR<]7kBG-Zf1dhlZ$(aHhQB`[NbL1J7d=VaM$@VXB'*kg[:Q$MaomY0$/`u/'$-R,3,0q'6d_(k'ZJtpnjR,iQ8!U@/P=>KHPi/='HIeV$Dp$Hq@Rjbu-h\QQjpFt(nR);gBB2bJ;?eBY4Acr?V7m;^3faaX#VVg6Skc72S<>TqF_*)=4!d.mIM`I&1UbF$W<Q]%H:jtT3g/O>)Ae"B4kQJ77'beQ]HD1EU6aBs`%0qt'q7FtMq2L?lT^E%\<dbPI4-_lIH6[pMTGrQJ8C+9Z3-\$GX.99X:M"@KIolV0WUGE]=KBATjh%YMA<AJn#&TU/Z,aLl:Gt//+t?j^_O[#DHe*mf[k-YRMNc+VG@K7*FtN/(K=t[VfF"Z80Jd2+!UKEMcZi"J%[sI>4S>YW]C.:'Nn4n6lSK_jPBUmjOdp?Y]Mm#O_(dd5^*]'EnQb(M,2l_<f&T47Ef<[$Tg@M*Gr0V'1$]pg+At5)&@cZo+NH`A+'"PoJeAZL/,<=#Z8k=[Ni!D*$3nqYeMU]G$jq590P5B3'6V_Y)53/SiW(lI6.j:6@\ug6U'j3I\P5*#JqY1]Vpr!rN,4nPZam2<2,/)p17bp:)8J7/fo"@8\#NqJV"#BLj1=T:f*X[>m1?k#*!Z-.UN6XJ2?Gp1%\d-ur&mYK?IUadAu^Za9.7-:7#L/3hc^hD2k<1(;YDoh[+)-e+CVH1md=Vb+B[5gY^hO,F6@`*/tF'@roQVboqHeg>1ThWhWsXqFg%p#(95dM>/Ru>=/5OiN=Mu)_.kM<\1rAM:%6Le_8Fh!H]r!E?_&J0SDa-&?>FbJ*4EN<a[u%R+Q[SMCta&XRC]iF<p/cEEd6%ihW,uHmA19s\#RZmo"t(N9j?$YrEUH=.R5gkETHPHq4DYCV]$K5Hq<<K^)@)IC-'&$9PGN,\1WM[//KLjRDbm$pUQ8!aO=F-eE+H(9BJ`pE'l%4fejha/hB32h&lAP=1<*_F3,H9GhXAqA\4d:rlQ++CiU'<Cohq`A&4]^KNgHKJP<+9o1LcuhJb]BGHa9;8oc'/[TT&u.;'\pF%!d!;p+U^rnJ*i]%sNF[UI&2i[WAW.O$_r'pT%6f(PVX;o#IS>,toV<((Q\\rK.>\W<-7lb3[M0/Xbd9C3+(R[gF&/_H`?f:&87L$&+)#6toFoj*+DRC`008^m.6dX'`E8t&NMjV:L:n9hE\k:.Al%M$g0g<XNM'rTFQ#in"1INX/i`Co:ZR.N;upMn;'ZFS.kK&JL,>W$/1M_ETg^f`B$V5scR.`Q>gs2W=Ae^*.+l2R(dh5h<S/op-pH-p%?4JuB<gR`Q,B`<CC1'&BCOB_N\B`agNL1Pc->`qoZ=jI]2f'RnG^A16G/aU*gH_Z&)^#G/;m<l+P,+@\?pPh!MMN:U69k,o!(#,2:Wu@"4\p5rqoVn(D"#eaJCahI`ZTV5Ti.rbtO9lTi[hSAu:QB5g*YOZ<)/EeXK1+HgiZsWO%b"$+0u5SloeqI:7R#1rnJcqj<l[1)d)l:f:,mj$~>endstream
+endobj
+16 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 3825
+>>
+stream
+GauHNgQ(#X&q-CU-mVn_%O@JZM3;[cJVc0X]^[QeA[;aQ&@BNU`/%sQ]NE`KjP0E.2bDh<-B<7Z`0/2RF`l66W`)>JAE/`Grshr$DeJ_7V*g89Z\Y-F25Jo@\sZiP\8n%'UTnCBT't*PjBKODFFr[p)\5!#/9bo)BpM)Ejfs?600Pc07*BS@O[$g_DiZ85ZM<V$Vd_s*5G%jZVl;(R=[)fPH?M*3M^hg=<&Ah]8E+Gc>&!bbB"r*b[C"dHMCU/,;,ejDj(_/0Y3UL-Di*(Efo#)/bJV#%T1YN06<(7dC+6Vb[,BWheC.k2K0c+t(6ZnY7^CCHhl<])VN`5sKYX7<<CVoAA"5,AMI9#0'W&r'HBhnT;,O>[8XZ;4$aD1_7FF`[:_Y;(723&V+McHk%%eIB<F#`J]*bHq'0Ij1b"ulpMh35"k=QF3`?hslW)@cBPbHXMKEH_@T2SLl?->Cu`1_%YqbD5TG2d;*/RY\+:?0JXn.o<UeON2kh7%6jeuF7;$Q4c5/o[OWjX&aUeoFNr=NE])>Lg'+/u^<g<X)!_=/61Ls4tl1-[fh3j2+E;Wf4:,HEiQC[In+(ndYIaA['Q[jHV8u7-cRVVCm-[UM'bXSlR=<g#Coi(<s',n5BeYRfS":.]]BQBdlZC9*of0!I.(FabK(#NZ^&XF[^c:\*Ycgq!:K7>a,s<Wa77H`1C[PJ3$Nk4O,&\?H%3]6I!Ih$\9VT&*Jc\!HFtg_'hs,8[j@VW@Bfss0kM1]m4VrrjQ6P?iTi^qHr-i2K.4Ci!U-OKe1D#%NSUV^tkA^H^5kCOf_g:fcrcE4-&Em#2+6;3I_rXYGqdZE<^1dQojT-1-Y7I68o^M[6WB[MD:h3apY^Dr$[KKGd)8s9E]qXHIlpe1;SMB.218]C]eA-4mC8I@mD0dJlNb9\L\pe$\U!)""$8nFj,Bb-<KHEJJ9E`a`)!b<Me5tYW73:JcE'Oe'sXT"jR-SF4RT!qEF3:;W^lYJ;Hrbdse3)&m&'7gt#V)eY7\FWD[+N/sh_W7fu=rD2r+:!+(Spi7*Aaek9g&@fCtL-5M3XYKquo-IpZq)^$3%&%7T^&:)J8W\YAYE=a>qZG\aSZpK@M,')CV8"]q9j`?;([SA+-"F:&]LJaLY&:0a7K9Ypdf3!Qa>9sK^jk.$1NG5huhI'1CMaANoT@WBXcjuXtX@%j&B92sfXjnOj8Y'HSDaDt^+ki;7;Q;LG)ZXjY>F`%9mraL6@HSh=/#f(kFWBl&E9gS#EL]W<:X9XJC.5uVhUI+-W=i6cA_NG2:pmlNFDREoEPP$)k[:TQeI]s@+k63!a(]=1E^jmY<F(D:VPS[(LJ_<Sm\,abOZ70l9,o;qN$dCVB!E>r)nR?#4F8oQ\7A<g@s^%$cIboR*bQJ$J`@T9_jRD]ZDaa/LsN?7+Ujs0N)r3EltA5_7]3S_1U?rW/E]-cj`G67R<JQJbX&@nQa/[N/Z:j!Ouo)e4e\]E\;E3;A%XB8I@A(N#Mp4^!(R3#*Um@69*iZUP.<D3-'3+eS3V5Ml[i>B)-TV"lZs8r!EW)G)BfDt(#qBrc7"Jj^iSLM6_W#'B<k0>9H6"h$dU"Sc!t%i$2Jqe5d-'VXR<n0b)&'Kd*VB-/8e0PmW@Y(5%-bgT0D&V[_0cX0up3N'EE;'n1-q7?eJVQ!J`#8[RPmr9R1X$Ysp=dcFN:l"64q:AeY.^Bs[nRf*.<r%W*b:p5k;]fkl4M#K+"@;i^]rG$AlAq4DJ]"Ff4"KJ<D\%@r+\J'k@`&#VX,6fD>b?Z>14RDbWl/UD-2B&?Qb>mWo!'er$Q[gFmS"X7o<YUPHb]Q$4H2:K1X%K>R#>8d;_P9T95kmG_.Ir9JN41G/-<E??m6@kZao`T@Rg@g&>+=;(I_fAR8&W%^DHh+hmD^k_lKU7er_a<HFeqC=1$b=k\(UT]U&oqQdWe',</%KANfKIOOr/7O^)RVe!gN%><j"@k5)gFa%'@<RBJtSHn)7jK3"kogE]!*Ej@+haY,I=)sALC.,=+H@d^uh=3+Jj!#LATa!$";\aW4c;2LiTpl\a+K%#Q>c;FiGZDs0U=3D"QnGNNp4,:DZa3Gk^9P3W=U0J%r99cIB<NTKsW#7XQsA)Ue$I=4WJa>uaR@?0#o1rN*3Vbr'k:MS6@9gc^*!`RnG6QhK./>r^N[)`c/#Hnj4mfBgAH>D_4Xm),I_eXt,AYb=/GpqXuThUJt2a,[5Bd>5N[)NMmE9$OG(e]@EgR0*Go7jF*sN9*od\sJBP\j>C3'/T>[JMkt$;_eZACK2bGP]S-hS]V!6df&2G!(jZ,N$X!"b$8PIL&lAKMBh@^XF@Zh\>!*T.BdZA/Mo6n9faNkNKR(9`^ZF"3kE5l3]0=B@tD%$LBT3M<DM&?AAR&[5\Z)_Q#:(Me3JqlGjo9V3_Q806Z#Oo5i/5q6\-kdYM3lEAmCQSH+5qO\sK%9b\AaiL%k\%]Lrj,-!02*F3*B5oNp'k<!@=u)eoUAICDWHO-=\W\,p.o'rRPuJ2?BiKH<.]'?gThJ^f]\p!uRE5M+[-6h:I5a.dbd5<Xo[S*nMOT^#//PApSh,pH+K<ECMAk>4b!<q(YWE5/D^a7h]%aVN-?K@rB&aA"&Db"OdtH&g!6\.#7pijp@gG+P;W8KtReo^#OYE[/fP\HDuXaP=YIG;($kK<BFu]X`H=rVjSaIFpIkF]+?=q:nfMTi8%,C850oQAES?bhR/iSZAZ7:",[$:*hL'd?M51oF4;Q?rT6Jc=PBPaKEu?BD^H\>f?CW\YCi.I,qh3<`cSp&ajsEJ<>WhE=oIIHj<BuJu<d(U1D,.$_M@Gd(jQ5fs$nr;AmLD9S4r\<n;nVX;Nk]D28@k7ghG4mLqoIWY71$&.MAi.</UP'i')I6I0V^h5b.&MLb_f1un4lhKn_005l@<B%i7j:JG4=%WcjZhd6NAnQsiBQY$H97;o[X7O6+jmcHfke37YGjaB:.UQ0+ohIE&-iRDnYCg(NPLG[@Bs(!qOP9rhMHXCaP%n;-VI?0'PB^Y"CAsgEk)tV[;VUe/)6_XA'!6ju4[L*,V=q'ZfIpWgb=R?u$+Z5VfLIl>$Q<Rsm,U*EQo_T4W;8D@6!1;1W3o9C"fO\C08_@t!OWss!7HRJ5/5[TR'T@pUhA(B4D*uHgN6$m?(,?WNjCAtloQ$L%n@-G/XgLo-/.*Kh]8JiAHoTH!i2@,PVrf8Md!Imn`pW#N8YFJ-jp!V=Y0I644)usbf+ru4oiKV#FZD[)hb6K`i3FHC78P@&m.dTtFp<0Ylk`V)%>a8sObM05TZS(DK?s&94kX#Geo3j'7!,BEpLYC3+)3.I.QcPGn_#S*Z&N,8fuNhIraHgq=.jBI\U=OS(@5h^AR+\l]05BN$Qa\)%ZVb*QeFqT$e*,Sb<sNa[q)slgj*coCg4bbGKjp8;fCE"3c0f>Zn8.:oX-s`C]p?SQ&[d`SL_;UY&DuTo\bj#dHV"Se>,U`8bBaY)T7&kVW)!Br/Vbf4\Q51%X4p_s%tcqq-^^"$hVdF2_@:":<q5g;[INlqPFlhPO<fkNVN`k6smX?IJ7@:rnUlRrqc?bc->V;QM03_m,$FW&"L#pZENK\#CPGc.)]V2n(?Ool1Aa7Qf6FTnq#CZO(^U^1d/?_]T5,!Xo6&no3CfMNH*aqO.[mOR5M1%>&3DP>`Ukl>%uINYlZ>fBsdNI,2`[H&H&Bg;Y.]4Cu=B^^nW=6[HL]V'Dh]4Mf+5t&^O6^Md2NY4ATKDFaum#pM_V\:79#YYT%9G;B?lS$SW#<=I_3dgnXY.).i0Kgd6e:h:Z&Z0D=O?9ut`4IfW@blOs~>endstream
+endobj
+17 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 3442
+>>
+stream
+GauHNHZ.Xu')t1g@aLk%ADnq_=FOea$Y5I.h;+l%*VXjb(g#&sD/1_[W^t,%iNSsQAuLJ*a&^VhD1b:d7<+'s)%Pgq$V^K'oPZAaph^-]Y:Qno(eqh])f6Et_<'n=dt(MXFM!9A3uo9ODT?GbqE=`d?fQoB24*,VqCmeG)T/6TBZ`N`BNV_)G5D"#R,)'f%/R<^JTM*OP'\Yi0t8fs!`JHk,S]bW>7h6P$#7ao_Nj+0YZNOJ0bl/$+c:bM"rtJC0-k,lU^k`6gfm%^,E]-d<s9CqYabqA#6lrA,*oASc&f_O"X;oFJ.j^:_<>OVQ&'i*nMCS^(;_h_IBc0MHr-ks`YNVW`S;XG=i;GF>;Qd+i<!nOKCd:@gVFF`&S=lKE\=ZEa$ha*/CStIYA`:tJt/Ch]Ka4Za<V0n`D+9RJOCc2*^VD7!/*e6UulD0KH]=X1)*BVr"(1L%Y&Xn&V]R8<JpM1;B3r6GX8PFK;[J6^ZL>2Zo+WIQ99mI%:Va6$<"`+$4[#gUM.2EB.iHh]P/-s'p0oR,Y>Nl-j#5u<q?Zmj'tM/]UZ9(neNq:k<?+DM28.H@pumqHDC#J:Zk&bLfoC].@-u]17/ZGD8:.`O@uA,gAtZ#M4cA,T#VMhGXZiqZ<<)BbF8Sg2.,SOU`!ncr_7,A&GI`'Jlk'>gZUIBQEq.s9oKA5i;ussE.;(Kj$OClj=094#XmSogCpH'0q<O\(:Z'f'\K;=)'>D91(W*Z\0D&[=+[dCV=Mq`9(4XYA&Vpg"dY$:^IbYlXOS/!/q=X:A1G]c<X6/@P,+IY(.d6,"MJ<TVsOfcJZiKP/OqB8)5<gtOgIQsLUQg6Ut^;pDOU*XShZ&iL_1`LDFc4DALTPF#p5oC+Mk8P:$(sqb<dI;Le2Qj?9/C2Q3BIi't&)@UK(_8VkJMhl%:>he9)45[m1ssitol0((DGTP\hXtX'c8s(6\nEA;d"s:e\CUfPbKc0*Sap\qZR7B/^o^3uaa*Gq!`V*21VrQA4.I>+hcb6qRFa1&QH/r)_0BmrUc.Q=2f0*jfcs!stakgASG`pr'R#q!>B"-8"d2-=sZud-`u7D"Wl+R/VJ@lKRe\GuU4.W3RKd<+$rHDF%kfQ<Tgd5<rA5%!pFAR4Xl<"FT\'/A#&2(V)$`V.[9,V>#NT#BuLnB6^#hrDEd!hu7AjeeZe@j/rV'QWLT92G%u'o4u0ZP2s#7XD-jSgp#;Eg[-g+n&=b5H>jh!q"Mn4G,^'3("2;(899k7,#]*M4KV!%m59jhq4%+ss/a8L6(4*VRe<=38F1t"I0g4+Q3hj>kfod,7SYGDB9geK#Bnj<)!n<>gXdN3%#,S-onYOt\8=EaG_<r[-K:&$LUNHi]BH;15GgPqo,n([>*;FYKsnbq>hG&7i1H@RX0\:Ai#AJ,)P)30/aH&D=jB3?D_Rc@13E.*N,@<8c,U(irB+&%r4<COF?$g_Lgcgp'@'PuJ2*4?5ZbB,`F7_BiA$3RURqm6BPZ\YG8_6\G26nee0)m'+d7iS;6??,,Zct$G_ShN)h9B/qm)CBnIu(H%.kqlXE@g[DSq">+'sB.rr$[cj:)a0>SEm'NX>_$fdN=4!]Lq!*YC\jjBqF'QZs;0US4tcGplo&3sJ".!VWjLe\^/c;9O@R*,(Gd[J1YrSUSHfULFhR+0U0p7Cb^q:-HN);S$?%N"d/]\Am/;b;^1E@4*usiGfmnp(nf8:Ome:H$411n#A<;GC5dZ&q:g1Oo:(>Boo8?8S6`;H,aEQ:<nN<$gl^<1cOYK("jknE\9asb`,6b*=U,l_=7B.?KiE(.]1[@V/OY6klb3#HGW]U`4\U]k>WIc-a+Q8ON0/!I6:,ln'_2"nGci#7aL@DbT7TaLJg)+FF-/mPD67ON&E5fZq[>02q/2n<qi%OT6[W\g_c6iIJBXUp<-cYQ+^5U.XJ'oolcn3(L'nCl^#6:Wd:5!:MNnC\@SCN>@h`fA?<Q.^M=X6fI6XPG0u))ZHqbLIFtKs<('=s(uXZ/drW3K]:J]EZg<+L0?q"p>h_EW1cMaZ(9ST6g2K^u,0I4I2;S66[;sEc&SVmnL9s]u%618-&]KETo(U0j//;oc/tl8/qT"epNn\KZP]XZB&-`tQTsMIumF7GoP*QUc2.\BRjs$Vm+QbXRN8E.:$rUVLaDgp.n?Rj[,]I312oEHRQfk-u'0ZB;?7Jt%0G6h&NV6sPZ!S,!O6<Lt-*i&:Tk]iF9[NKmq3#tXi'QXLFMairM^@[HlO8-J%OPW+_seAi;WJ/]Fj(K'7K,$E'de=RmK-W/jbkSfmk&9pgK#I]]C0Wnmu`P]C)8A5@G<3:@oB]fbNa79>Jq=:.E,I&;i:H2(_/[]6FJHqC.;Bc?)'btqF49HZffr_''S6E*,(mYb!hOFaaH/_Yh4]jGl7\er-Joo'eAu<\%/D9cRVU3H)5FUAXCuj<lfCWFQC8O%L\QMHD$1,>8>@shAPSt*..2A5FU'kiV;Wi6`-JcKT$sN?EUUUIU%<jliDn95K3DOfIN],@SsME[[`FTqe_kZ2_0%*4hu33?IO:R3Vem!._#+8$NjF#h0\rrXrmZG`B!jr8!8?Z_6(-a+8rQPUu@r6Vo"_UQ>(jf*)kjj9@B.5D>acB99-^#l=5*&P:hKj93Ke_B-Ff]/!)4i')KjR3gK5iV];>;>aN%B[d!(Y7T&HrMoPN\TWL,#2<5oMfD_`jL:mum-'`:D#npfc<?suZQOn,\dKOpAXbnWtDF1db`4Rmu1=+F*G^,#m$Ijg9iInO&[EueHl.s;dqcBfI'C'CW]3!+'pAit(:l]HU!.-,UVu!D^orHOblJ9aLCaHVA?X<X,QJCPEFm(.e\B+UP'<Bk=]lTK2Xu18=I/ZF":=@ZYN8)c0_XF5;m"I_\&M3THH0Z&EF0gd8:1o2uS]s/JWE-FqH+BpFgFhZ&&V/,.&F3M9AY+di$_%1s^s,77K;%SZok&9qY+jF9([OR+qks6*YK(P*^c,a^bi4D&Cn72`9eP>4b.&O1-$`U>cH@6\oboAmh=JJ81r&A[g^j)dO3h)Yq0(o5^BhMS,+YFg^(.rdK*c"u&HgsZLM$l6AWl65VY2"t8",4sUR.=_\huL)7al4]lcV@_e_)ngKsq&J,b1_.dm+%`K:L`/\-,YOa[aK>?/PCNMb;MG,^j0:o>8o^?((LC=i**d/Waj2V'6EM-R"Ba[;\"EJ<'/O'U=Qg8(';4XGbh(PgThXPc1'V%R!M_=kYQ1GE]%NjN%1cSDS1/m?%5ca`YaG`_u@PE6gXQ?6q!=A7n;D.?WL6XKF![==F](0DYGsjq#SPTliAL/7-7CN]cmO+>40NRGt+uWE6:CNf^Ta'47JpY#\,Ca6A.frsP+gFEB=liV.h##&SRu.aOH`HT(J,gZ.^7g@f'gX>6tKX`aWDb,^r]pW@W$Md0>-]q.@GK7j1+ia)4Y~>endstream
+endobj
+18 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 3427
+>>
+stream
+GauHNlYkN;'*"Q<@^)K[KqjoDq:.obl_`oh%o&LihWl3oTV*Ubk!ft`;Msf;lYhLlA`kAo=lBu=VFM.,kP:Sj"7Yh>0`U/Ai3sU%nihRHK\6EYaGXI"&^G#:hbSk#c=,W7KCK)]aS,n&kl`*GX57q8:87gYF#4aDn8f;'r=Q!i8WJi@LBE@0"#p`:TK"KO54Qn`n?SP22`$2LkC_`$iXP3fJhS%%VVhV&IlrS'UT]kYrLTZb9Sa5'144'IoIR[9TJuVJPanX6HNgaj@.lD$oGN.fZN]B,k<!1=k.pNj(?3B@Zf7LKs5H%k#BO4U(j%7ZI9<]n;HY=5bM>qleGJW+IsF7tZTQPUoOODrN'X/^N'"-6qG=>>%Q1qFR<q8eZ@Ij/n'4.(^:cLUo^o?V]b2Wm34moF/*cjn,>(2e9U(FTXC,c=)K*E2n0q-l+EQ&1.Rfl%*Qop.n4M1[i+O#Kb>9m;Nhb9b6_'$C/t#<SQ`/ehaVCmfRV:?p8ic;rgber(dhO<iObQb=MfM8?E(p"JQ"<VqY&@Wt<-/HGJNo6R*1pX&YaNjAj@^$/A?djJ1m>-i'7#KsU@Fm4Fo5=E?IP?!<lQY[gW1J'Bi]nqcB:S8NQZ"e7u&'i<M^FcSJag*M6&DLTY\d6\(PI07GX@8R:iMO6DU]a'LS:],1.=OC<fWF6EXfEMXluH!gP;T^3[=@O_J*qOmiHHGrRo3<Wn2rMX0PaE):AnQ-:s[A5J*!E<a$JH[8\/Jdt;Al'pa].H0RJHZU^&T]6?,N;U,cr*SPeCl2aHW[qrudpP6)efHKl!FDOFTS,!*-H8jD9T+-cI#T0'oF-d>YP-+XLX.?93D,*e?q?@QI%_'S)O;37FjAuN=>RQ#%mCie[E7_q,6;;A(&6S8Y@7o1Z-52#[DJ(U$jl]:k;jPX]/FNS$_m]&nfK+eX$G1eI`78+`_FbuckdC(N^csOV9*6lUVY2*%noa!'ZiHbN=j(LUt"1P56u(.cL4Rq6KTC,pMsO`j!s)7fd>3WG?BfW3i`ET-<;h&f2<omKgP6ab6)3CQg@uK9\sc!erCDA0f/1P$,5O/m@N-r'Osi0I:M7DXgXA',`?'4nf)ZU^o[H98Qb$h&s7]E3G*l3mJZS`4,.*:Y/^MBCHa[89#-9,(gE^ol+71m$H0QNFs2fl9!1&6$PI+sf6JiKK?JU`"57aP<C4j_7-f%%>tD>8Z:^ZYR>oR(#rfP=V51\5)*]AhGK:K?QXi@u9c3[g7a6.b\4E(ci+=qdG&Mc9o;51ne40&UERAaqgKr:oE:^PSX6]A`[o_IKQ#@IWs87'1gRF?*W(mE5KZ87.MG-Hnnlh\l;TXMSga9GVdCI"lC@=`JA6+Ic86nu?[c3[TD1jE@*df:SDZ"H>s'qI`BL*PY61n'D9VQEGX0EqWU._/`Wt?4@>J9D?caG"epCWIci5d,%'e;m5B/C0ZR>>nF6HRH-N`&+DV]*b#R!U-V;[QaYatS*k\F/C0NpBt-A'OY,l]5SRDaGOq*h2DF<nUn[`+jhW=H1l!/X=2aWT4qnk0<`V'Hd2#mdtM8ZT1@;;b>4;RlQ:#KJ88q5,`IgY'#>h'FQ&#5%m%Ken\@'qbPgVkAPrhpAV$d?9^U(8_jQs[Rn8TPfBRh3Pk5kNE5/.k">"[\@dc8L%ohp/qV3oh5_@ViiP!<MHqFgrLJUZr5=njo1GgT-/S8J^7c2D6f53K.u\j2mj>IB7ohDs<scEd7"kXlTCsu-EFH*39#"`IR69Fukem4:2r;"mCt($fq_4LF60&PI748BlIO'@OqH2fRpN0ep@E4I'MipEUU*Ao7<@K^nY2aJe-KX?Z-e`"9SPGL@Y<'<R=u-Z;-Hncb5cb`5A;#f`7Y0GL_%,XXJ8*UBUV#go)C)/s=..4iq+`]N'Qf8GY'D3*[inR+fUBIWRZeuA/U.(:7#-/<&^1(d\KG*#AGW)6_*6m>^<s6iBQn17Y]1NBlB$iLYG1^BfP#egNL'F;;X1Kon\mn!e'H%L]@!LFDj`$]c4hUqWW]k7m$1b09[QlTRq'lV>NgVN@TXni[OK'=j:+FVl=GJH#c8cA36>C4"oD0+ak=$TmR4o<X;Eh;W8U1,&Hh;='.Getp<'O*T#fnF[Snn].;BMRm%=tSpq:doTfM#iR^V,hFW8WlU_!&r`j^*V;t9;kfB!&3M@O\PRSV(@P`Gg:ThJLWEaaf<jgK*Ke>FDnNILb\.ATB+r3DK$f_3tpVB9o`@<%Mj#=i]U*8@u:9]4"[7<e7KC#,L=_Wi!l=(^@VR)\UZBiQ]!9=ANpi%:">iSRuihB\JKr!@V3!U\%ikAW1B>]K_g'/+r[ZQl*14a@sBnAS916_sSQBYL>$'h^:-R/?;9:#C=gD=7*:Rf?c]qtC8(7lR2KSq=5Z)b5o,9dV`_7LaM,Atr3jN<2Vh;*te`"DHkp"-f.Kd\rk"*60mNW0-,!7L_4oSC+:/qMm?M3GLM[CFY;^lH&K\UP@Jn/_lJ+k`6\u7ueLH*G73DW0-,!7LaLu329><%30";En!Q<40f_c#0,EnLMijFG+N[<(nL*Ygij[?fC\lIj;<5m3#IADcC6qE6SR@[O:h\KEB")>i03]+&"l?"ViRRr^n'4&:T#Ej-H&S@ppr5G)Wn_,-9Qu.0-)sjQnh,YYPV#)V.&\7$V$6pm-o1#"N2%1/d+r:nJH1Pj#SM"$ns55&j^jq<*Z7*A,:_C\Wf]o1"OAf^Xahe1&BoHZXlnP!2M+/^)oed&.[)6lK/(uIfr5h3f%2e#GMgZ'1.jtEU3VAU36bF?lHP$pE%-lU/@'1nXTAYYaC*`<IIi`otm1##?H_hfeu>#[LdYih,^?ueJee<8rVj9nHbuYj_]Pqf4HstO?cQt#SS*fOWYYF-+Rl=Qp$E)Mmch.VI4#i5$#h'o1di&!pPD%."hts.:Rrn3%_D/Q4ZKh(A/0$_r)g746lFlWdGt1QC?BTpUlpD8#jQP)%!n%+\/OZj-QC:)S`ounF1tW=3b])1nJ=r(QQ+uca]gidf(@Gf:(4,6^%:--*]p1@)We$!Uk"=L>^.f3>t:0((5\RBHUX=cjOqkJJ`l00j?s-^"*:,B)8Ysn%t;1L)NHd,0S%^egl<3S$?2g(A-9R,HduhJMNM$h$ADoL(<LUC>jDrq`M*qk,/[XZ99bcjR[Xjb?IMK&&9=]!BT")@<9%<:9/'_jEc-q,^P%4^9/^sHm1j*ZLS=X]nI/;=5'Uk.YM:='#iI%ai93iWU2m:<X8n&fsIf,k'R]I!*2diK#:#gcXEO)cT*37,t=pT/u2[FIQg<@a=/T!e@#_?mU>c:>&7A(iM=,j]-[_#X&s2Rc:^(;iY^\hkmEdRVeJHI3j_bOXutB@4</66*$1N,*rsK=Y_sSFgiX]&NZ=,t9t+N5_0tacYQbp9=hi6k$TRr(s6n!9~>endstream
+endobj
+19 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 1781
+>>
+stream
+Gatm;>E@5m'RoMS30+1,A96u]=gS\j0PFP'_U'$$$#/LuDX/INKC'64ht,O39nuViTrM_iSiApcmlSQ%L%n(8IpNcd^7nu;,)Ti5D(1nW1KqJbB<0.p8_!-t7mW@j;jsUUOJH$:fC1W<k&E;;#iCP^Ol1R@>D<O6]8=IAE>6hP9B\-'8TWTLS:pl$4RP(]?=Wo@5)QXk0^mLZEAV$5'L[juREd4"5LW&F:,FpDj+UKiK4@O0&gp3;jGS5PI?<6O#IM(9eO-8"%6gPuG^3nTHY1ALg8JqiKYk^&=*S\!PdJK>BAGTGgLejP/)JW#Y"`c3QMI,o*T)s]$Z6#aJr=erbQ[qg.2P%K$`;15ph+$:O?:Sm<Z>p)B9LiY\,;u9@iWJsM(RCD^SQZ0SZS(D`,p+k^W*YTrf4g#;#`EnAX'O$=$:]W8BBH'XTnZV--=<W[#8-gCVu(tWFR9to-NFs@+K@TTQrVZADhkU-]dKrG"LiUMr1k?QSS>7.IAE,,ZP#k3@Q%qJ)"XTX$XOc,c.K?f7h;6'hY(Ca"72J)S_o)kDIhAs5;&TRDuTKGla/I*:Ga.l6Q1=n$/f]g!Qb=58&(CX7akJ5:0O"CT_BP<Cof'1-([p$ft$p'KaPjGE+AVi/9c>_pRV=No?0b7g,6mV6.5`a/fkA5qKKe,+3Mp_Xl=D42(n,=:M+*THb%R+i+pUOD,81Y$?:$nlr+:L8W774XE!e-bF444@)MlX'cB$M/>LU(>E@-=]:Y5e$l^C-J)__Ji?bO.lLYdiq?n0`Xr&1\QnkSi\7l_Xr<4]2BIU,5kc+4AtOV?9*=\G4KtGp0_k"oA?;d:!A\KS\^]d=QCUuX!j+KB"Qi$M#gkYpi'h`C_3\RAL!(d4>W)O7g]+3u<P,'W<gDU%*&^eLn].m*8s-+"5'_qK.=tt[E*f6_f\09L[.bbd[To'6loEN6C6[SB7g(G4C2:;BK^l<\gkj$KV1c3'F$)qNkB#FQX`L6@>as8U%kj>i$^<U)0d2OWos"aN69Uq*j[jh`1qnEb70Nc,fOIHge7Ge?\jU1=D%C1CU@VlqPXT#'/_n1,E6@+W%9Ti"klQas^-eHCU6E%SS4q>oq\`i;(!)IjNMJD6j1>b;KMYKtHgnN8?1;CJ8^<[$QbjRu2snu-O/2%mibq9="gSYW9.Tec9^MIl8D$)-l_<<\FN*?PO+BqRIlJ=-+dZTapD9Dngmli'WDjgC["RH3+F06#s55t[^tDoDFY+VHHdFnG(3kaYTWDuB?,g8h"-5.kn8Dk$:]0$BJi(Uc@7ihS\B>&ik@k85^4&8^]qcMu(8\cL\5bh5]eml@8AbO4kU#Xg.rk$bq[VM,^\Tb,h;KKgYN9_1]^4`tF^Pl#7GVj_#&,jYV-"2TB[KJXlD<aN'4TA4k%Q3\U6ii%mo4JNWj&h/\+S!o4=l+=:)5Q"fl42X^*,e[)/am.[4r&AfRkO]Orcg?pV?COC?:1p2s1$!J1#-+,C.`n>3XdS3t_@j$H?L2@s;bjH)&R@BqpCDQZWHL&GCZZs5pmNY%nuV"OAe<;Q$9Gc//hgC@AY8JFq<PEO5D[g9[fO@<fM+5GkTf0sTR%DPdu1!?b)qiFosC*QoqJhG$e`4)iM1+)boMeR]kRF]%ITY1fR@Pg4\(/aegJ?%NIBI0Vi1"3)X+-A\P\P0TPmoCMh3PK0m,IJMLDB.n_gEH'8NR&I\gh2f-'acS"#ILKDgedaUk"rCIJh*M<E4RF7_43dTnJDl%Ng=-sW5^'/nS)>@=C%;H(>ZqR~>endstream
+endobj
+xref
+0 20
+0000000000 65535 f 
+0000000061 00000 n 
+0000000112 00000 n 
+0000000219 00000 n 
+0000000331 00000 n 
+0000000436 00000 n 
+0000000641 00000 n 
+0000000846 00000 n 
+0000001051 00000 n 
+0000001256 00000 n 
+0000001461 00000 n 
+0000001667 00000 n 
+0000001737 00000 n 
+0000002032 00000 n 
+0000002123 00000 n 
+0000005350 00000 n 
+0000008954 00000 n 
+0000012871 00000 n 
+0000016405 00000 n 
+0000019924 00000 n 
+trailer
+<<
+/ID 
+[<c05249ba96363bba3f5a6cc31f53a571><c05249ba96363bba3f5a6cc31f53a571>]
+% ReportLab generated PDF document -- digest (opensource)
 
-Install Ollama, then build the model:
-
-```sh
-ollama pull gemma4:e2b
-printf 'FROM gemma4:e2b\nPARAMETER num_ctx 12288\nPARAMETER temperature 0.2\n' > ~/Modelfile.g4
-ollama create gemma4-sum -f ~/Modelfile.g4
-```
-
-Load the functions from `~/.zshrc` with one `source` line (run this in the repository folder):
-
-```sh
-echo "source $PWD/recap.zsh" >> ~/.zshrc
-source ~/.zshrc
-recap help
-```
-
-Use a `source` line and not a pasted copy: with two copies of a function, the old one can keep running.
-
-`recapmail` additionally needs `ollama pull llama3.2:3b`.
-
-`recapurl` and `recapurls` need two Python packages:
-
-```sh
-python3 -m pip install trafilatura youtube-transcript-api
-```
-
-## Web pages and YouTube
-
-```sh
-recapurl "https://example.com/article"
-recapurl "https://www.youtube.com/watch?v=VIDEOID"
-recapurl "https://example.com/article" "focus on costs"
-recapurl --single "https://example.com/one" "https://example.com/two"
-recapurls
-```
-
-Put every address in double quotes. Addresses containing `?` or `&` break otherwise.
-
-- **Web pages.** Menus, ads and comments are stripped (trafilatura), and the headline and byline are added. A page over 4,000 words is read in parts, the way `recaplong` does it. `short` and `changes` apply only below that length.
-- **YouTube.** The captions are read: English captions uploaded by the channel first, then YouTube's automatic English captions, then any language. The video title and channel are added at the top. The channel is the uploader, not necessarily the speaker. Channel and playlist pages, videos without captions, Vimeo, Spotify, audio, video files and PDFs are refused with a message.
-- **Files saved.** The summary gets a `Source:` line, marked `(YouTube captions, automatic)` or `(text appears cut off: possibly a paywalled teaser)` where that applies. The exact text the model read is saved next to it as `YYYY-MM-DD-title-source.txt`, so a summary can be checked against it. Long texts also save a `-notes.txt` file.
-- **It stops instead of summarising** when the page marks its article as members-only, when fewer than 150 words come back (60 for YouTube), when the site answers with an HTTP error (the status is shown), or when it redirects to a login page. `RECAP_URL_FORCE=1 recapurl "ADDRESS"` skips the paywall and short-text checks.
-- **Several addresses** run one after another. A failed address does not stop the rest, and the final list shows each failure with its reason. Extra addresses must start with `https://` or `www.`. A mode or focus placed after the addresses applies to all of them.
-- **One file or many.** For two or more addresses, `--single` saves one combined file and `--separate` gives each address its own. Without a flag, `RECAP_BATCH` decides, then the command asks once (only in a terminal), otherwise separate files are used. The combined file is `YYYY-MM-DD-batch-of-N-links.md`: one heading per summary, `---` between them, and a "Not summarised" section with reasons. In that mode no individual summary files are created. The source files are still saved, and the clipboard is not touched.
-
-## How it is configured
-
-| Setting | Value | Why |
-| --- | --- | --- |
-| Model | `gemma4:e2b` (2.3B effective) | The largest Gemma 4 that runs fully on the GPU of an 8 GB Mac |
-| Temperature | 0.2 | Low randomness. Tested against 1.0; the higher setting gave a different factual error on almost every run |
-| Context (`num_ctx`) | 12288 tokens | About 7,000 words of hard capacity. Larger values need more RAM than 8 GB allows |
-| Thinking mode | Off | `--think=false` is added automatically for Gemma 4 and Qwen. Gemma 3 does not accept the flag |
-
-Change the temperature by editing `~/Modelfile.g4`, then:
-
-```sh
-ollama create gemma4-sum -f ~/Modelfile.g4
-ollama stop gemma4-sum
-```
-
-Use a different model for a single run with `RECAP_MODEL=gemma-sum recap`.
-
-Alternatives were tried on one three-article batch each (5 Oct 2026). `phi4-mini` copied the example sentence from the prompt into its output and skipped the gist. `qwen3.5:4b` did not fit fully on the GPU of an 8 GB Mac (23%/77% CPU/GPU) and invented one figure. `gemma4:e2b` stays the default. One run each is guidance, not a measured result.
-
-Settings that can be put before a command, or exported in `~/.zshrc`:
-
-| Setting | Default | What it changes |
-| --- | --- | --- |
-| `RECAP_MODEL` | `gemma4-sum` | Model for one run |
-| `RECAP_DIR` | `~/Summaries` | Output folder |
-| `RECAP_CHUNK` | 1200 | Words per part when reading long text |
-| `RECAP_LONG_WORDS` | 4000 | Above this, `recapall` and `recapurl` read in parts |
-| `RECAP_OVERLAP` | 0.6 | How much a "Worth noting" bullet may repeat the main points before it is dropped (lower filters more) |
-| `RECAP_BATCH` | (ask) | `single` or `separate` for several addresses |
-| `RECAP_URL_MIN` | 150 (60 for YouTube) | Fewest words `recapurl` accepts |
-| `RECAP_URL_FORCE` | off | `1` skips the paywall and short-text checks |
-
-## Length limits
-
-The context window holds roughly 7,000 words, but accuracy can fall before that ceiling. Measured against the source texts:
-
-| Article length | Behaviour |
-| --- | --- |
-| Up to ~1,500 words | Reliable. Figures, names and attribution generally correct |
-| 1,500-4,500 words | Mostly good (a 4,400-word essay and a 1,200-word one checked clean); occasional dropped detail |
-| Above ~5,000 words | Meaning can reverse in a single pass. Use `recaplong` |
-
-One real failure found at length: in a 5,900-word essay the single-pass summary turned "without solitude there would be no America" into "independent thinking without solitude", reversing the argument. Because that failure came from a single run, treat the thresholds above as guidance, not a measured limit. `recaplong` reads long text in roughly 1,200-word parts and combines the notes; on a 6,600-word transcript it kept every claim checked accurate, but its "Worth noting" section repeated points. A filter now drops "Worth noting" bullets that mostly repeat the main points, and it worked on the same transcript. `recapall`, `recapurl` and `recapurls` apply the part-by-part method automatically above 4,000 words.
-
-## Known weaknesses
-
-No invented facts were found in the summaries checked, but five faults repeat. Treat a summary as a map of the article, not a replacement for it.
-
-- **Dropped hedges.** Qualifiers such as "very difficult", "possibly" or "the best explanation is" get trimmed, making claims sound firmer than the source.
-- **Who said what.** A conclusion the author drew is credited to the person being quoted. Verify any "according to X" before repeating it.
-- **New versus unchanged rules.** In circulars, existing clauses can appear as if they were the changes. Use `recap changes`, then read the clauses it names.
-- **Flattened names.** "A journalist" or "a report" in place of the named person or publication.
-- **Figures.** A number belonging to one scenario can migrate to another.
-
-Two more apply to the address commands:
-
-- **Web extraction.** The text that comes back can be a paywall teaser, a notice or an advert, and the summary will describe it confidently. Read the "Text starts" lines and the saved `-source.txt` file. The stop messages catch the common cases, not all.
-- **YouTube automatic captions.** They have no speaker names, little punctuation and some misheard words, so attribution is the weakest point. Check names, figures and who said what against the video.
-
-Strongest on news, match reports, explainers, research write-ups and market pieces. Weakest on collections of quotes or anecdotes, where attribution slips most, and on regulatory texts.
-
-For an important document, run it a second time with `RECAP_MODEL=gemma-sum recap` and compare. Where two different models agree, the summary is usually sound.
-
-## Checking memory
-
-While a summary is running, open a second terminal:
-
-```sh
-ollama ps
-```
-
-The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model no longer fits in memory and will be slow.
-
-## Repository contents
-
-- `recap.zsh` â€” the shell functions
-- `Modelfile.g4` â€” the model definition
-- `MANUAL.pdf` â€” printable reference
-- `README.md` â€” this file
-
-## Licence
-
-MIT.
+/Info 12 0 R
+/Root 11 0 R
+/Size 20
+>>
+startxref
+21797
+%%EOF
