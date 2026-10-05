@@ -119,7 +119,7 @@ recap() {
   recapall            several articles separated by lines containing only @@@@
   recapc              same as recap, and also copies the summary to the clipboard
   recapmail           short email summary: sender, tasks, deadlines, reply needed
-  recapurl "ADDRESS"  fetch a web article or YouTube captions and summarise (quote the address)
+  recapurl "ADDRESS"  fetch a web article or YouTube captions, or read a PDF (address or file), and summarise (quote it)
   recapurl "A" "B"    several addresses, one after another (--single: one file, --separate: one each)
   recapurls           summarise every web address on the clipboard (one per line; same flags)
   RECAP_MODEL=gemma-sum recap    use a different model for one run
@@ -400,8 +400,209 @@ print("english=" + ("1" if english(chosen) else "0"))
 PY
 }
 
+# --- PDF: an address or a file on this Mac ----------------------------------
+# Exit codes of _recap_fetch_pdf: 2 no response or unreadable file, 3 no readable text (scanned), 4 HTTP error (http=NNN),
+# 5 password-protected, 6 too large, 7 other error (error=Name), 9 not a PDF. Other stdout: pages=N reader=pdfium|pypdf
+_recap_fetch_pdf() {   # $1 = address or file path, $2 = output file
+  python3 - "$1" "$2" <<'PY'
+import io
+import logging
+import os
+import re
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+from collections import Counter
+
+src, out = sys.argv[1], sys.argv[2]
+logging.getLogger("pypdf").setLevel(logging.CRITICAL)
+MAX = int(float(os.environ.get("RECAP_PDF_MAX_MB", "30")) * 1024 * 1024)
+
+def fail(code, *info):
+    for line in info:
+        print(line)
+    sys.exit(code)
+
+# ---- get the bytes (address or file on this Mac)
+try:
+    if src.lower().startswith(("http://", "https://")):
+        req = urllib.request.Request(src, headers={"User-Agent": "Mozilla/5.0 (compatible; recap)", "Accept": "application/pdf,*/*"})
+        with urllib.request.urlopen(req, timeout=40) as r:
+            data = r.read(MAX + 1)
+    else:
+        if os.path.getsize(src) > MAX:
+            fail(6)
+        with open(src, "rb") as fh:
+            data = fh.read()
+except urllib.error.HTTPError as e:
+    fail(4, f"http={e.code}")
+except SystemExit:
+    raise
+except Exception:
+    fail(2)
+if len(data) > MAX:
+    fail(6)
+if b"%PDF" not in data[:1024]:
+    fail(9)
+
+# ---- read the pages: pypdfium2 if installed (cleaner spacing), else pypdf
+want = os.environ.get("RECAP_PDF_READER", "")
+engine = ""
+if want != "pypdf":
+    try:
+        import pypdfium2 as pdfium
+        engine = "pdfium"
+    except Exception:
+        engine = ""
+if not engine:
+    try:
+        import pypdf
+        engine = "pypdf"
+    except Exception:
+        fail(7, "error=NoPdfReader")
+pages = []
+try:
+    if engine == "pdfium":
+        try:
+            doc = pdfium.PdfDocument(data)
+        except Exception as err:
+            if "password" in str(err).lower():
+                fail(5)
+            raise
+        for i in range(len(doc)):
+            try:
+                pages.append(doc[i].get_textpage().get_text_range() or "")
+            except Exception:
+                pages.append("")
+        doc.close()
+    else:
+        reader = pypdf.PdfReader(io.BytesIO(data))
+        if reader.is_encrypted:
+            try:
+                unlocked = reader.decrypt("")
+            except Exception as err:
+                if type(err).__name__ == "DependencyError":
+                    fail(7, "error=DependencyError")
+                unlocked = 0
+            if not unlocked:
+                fail(5)
+        for pg in reader.pages:
+            try:
+                pages.append(pg.extract_text() or "")
+            except Exception:
+                pages.append("")
+except SystemExit:
+    raise
+except Exception as err:
+    fail(7, "error=" + type(err).__name__)
+n = len(pages)
+
+# ---- clean: ligatures, soft hyphens, odd spaces
+def norm(s):
+    s = s.replace("\u00ad", "")
+    for a, b in (("\ufb01", "fi"), ("\ufb02", "fl"), ("\ufb00", "ff"), ("\ufb03", "ffi"), ("\ufb04", "ffl"), ("\u00a0", " ")):
+        s = s.replace(a, b)
+    s = s.replace("\ufffe", "").replace("\uffff", "")     # pdfium marks a line-end hyphen inside the rejoined word
+    s = re.sub(r"[\x00-\x08\x0b-\x1f]", "", s)
+    return re.sub(r"[ \t]+", " ", s).strip()
+
+page_lines = [[norm(l) for l in p.replace("\r", "\n").split("\n") if norm(l)] for p in pages]
+
+# ---- patterns
+NUM = re.compile(r"^(?:page\s*)?[-\u2013\u2014\[(]?\s*\d{1,4}\s*[-\u2013\u2014\])]?(?:\s*(?:of|/)\s*\d{1,4})?$", re.I)
+ROMAN = re.compile(r"^(?:[ivxlc]{1,5}|[IVXLC]{1,5})$")
+URL_ONLY = re.compile(r"^(?:https?://)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}(?:/\S*)?$", re.I)
+LEGAL = re.compile(r"^(?:copyright\b|\u00a9)|all rights reserved", re.I)
+def key(l):
+    return re.sub(r"\d+", "#", l.lower())
+
+# ---- headers and footers repeated on many pages
+repeated = set()
+if n >= 4:
+    cnt = Counter()
+    for lines in page_lines:
+        cnt.update({key(l) for l in lines[:3] + lines[-3:] if len(l) < 90})
+    repeated = {k for k, c in cnt.items() if c >= max(3, 0.5 * n)}
+    edge_keys = {key(l) for lines in page_lines for l in lines[:3] + lines[-3:] if len(l) < 90}
+    for k in list(repeated):                      # 'AB' glued on later pages, 'A' and 'B' separate on earlier ones
+        for a in edge_keys:
+            if a and a != k and k.startswith(a) and k[len(a):] in edge_keys:
+                repeated.update({a, k[len(a):]})
+
+# ---- title: PDF metadata is unreliable, so use the first sensible line of page 1, else the file name
+alllens = sorted(len(l) for lines in page_lines for l in lines)
+typical = alllens[int(0.9 * (len(alllens) - 1))] if alllens else 0
+def title_candidates():
+    for l in (page_lines[0][:14] if page_lines else []):
+        if len(l) >= 0.6 * typical:
+            continue                                  # a full-width line is body text, not a title
+        if URL_ONLY.match(l) or NUM.match(l) or LEGAL.search(l) or l.lower().startswith("by "):
+            continue
+        letters = re.sub(r"[^A-Za-z]", "", l)
+        if letters and letters.isupper() and key(l) in repeated:
+            continue                                  # a running label such as HBR CASE STUDY
+        if 3 <= len(l) <= 120 and not l.endswith((".", ",", ";")):
+            yield l
+title = next(title_candidates(), "")
+
+# ---- drop page numbers, running headers, web addresses at the page edge, legal lines
+kept = []
+for lines in page_lines:
+    m = len(lines)
+    for i, l in enumerate(lines):
+        edge = i < 3 or i >= m - 3
+        edge2 = i < 2 or i >= m - 2
+        if edge and (key(l) in repeated or URL_ONLY.match(l)):
+            continue
+        if edge2 and (NUM.match(l) or ROMAN.match(l)):
+            continue
+        if len(l) < 200 and LEGAL.search(l):
+            continue
+        kept.append(l)
+
+# ---- join the hard-wrapped lines into paragraphs
+END = tuple('.!?:;"\u201d\u2019)\']')
+lens = sorted(len(l) for l in kept)
+p90 = lens[int(0.9 * (len(lens) - 1))] if lens else 0
+def short(l):
+    return len(l) < 0.6 * p90
+paras, cur = [], ""
+for i, l in enumerate(kept):
+    nxt = kept[i + 1] if i + 1 < len(kept) else ""
+    if cur and cur.endswith("-") and len(cur) > 1 and cur[-2].isalpha() and l[:1].islower():
+        cur = cur[:-1] + l                       # word split by a hyphen at the line end: mend it
+    elif cur and cur.endswith("-") and len(cur) > 1 and cur[-2].isalpha() and l[:1].isupper():
+        cur = cur + l                            # a real hyphen before a capital (Anglo-Saxon)
+    elif cur:
+        cur += " " + l
+    else:
+        cur = l
+    if short(l) and (l.endswith(END) or nxt[:1].isupper() or nxt[:1].isdigit() or not nxt):
+        paras.append(cur)
+        cur = ""
+if cur:
+    paras.append(cur)
+paras = [p for p in paras if p.strip()]
+words = len(" ".join(paras).split())
+if words < 30:
+    fail(3, f"pages={n}")
+
+# ---- assemble: title line first (not repeated in the body), then the text
+if not title:
+    base = os.path.basename(urllib.parse.urlparse(src).path) if src.lower().startswith(("http://", "https://")) else os.path.basename(src)
+    base = urllib.parse.unquote(base)
+    title = re.sub(r"\.pdf$", "", base, flags=re.I).replace("_", " ").replace("+", " ").strip() or "PDF document"
+body = paras[1:] if paras and paras[0] == title else paras
+with open(out, "w", encoding="utf-8") as f:
+    f.write("\n".join([title, ""] + body).strip() + "\n")
+print(f"pages={n}")
+print(f"reader={engine}")
+PY
+}
+
 # --- web page: fetch, clean, summarise ------------------------------
-# Exit codes of _recap_fetch: 2 no response, 3 no article text, 4 HTTP error (http=NNN),
+# Exit codes of _recap_fetch: 2 no response, 3 no article text, 4 HTTP error (http=NNN), 8 it is a PDF,
 # 5 redirected to a login page. Other lines on stdout: paywall=1  cutoff=1
 _recap_fetch() {   # $1 = address, $2 = output file
   python3 - "$1" "$2" <<'PY'
@@ -421,6 +622,8 @@ if resp is not None:
     if resp.status != 200:
         print(f"http={resp.status}")
         sys.exit(4)
+    if "application/pdf" in ((getattr(resp, "headers", None) or {}).get("content-type", "") or "").lower():
+        sys.exit(8)                      # the address serves a PDF: recapurl then reads it as one
     html, final = resp.html, (resp.url or url)
 if not html:
     sys.exit(2)
@@ -460,11 +663,32 @@ PY
 # recapurl "ADDRESS" [short | changes | "focus text"]
 # Pages over RECAP_LONG_WORDS (default 4000) are read in parts, like recaplong.
 # The extracted text is saved as ~/Summaries/DATE-title-source.txt so you can check the summary against it.
+_recap_has_pdf_reader() {   # pypdfium2 (cleaner text) or pypdf
+  python3 -c 'import pypdfium2' 2>/dev/null || python3 -c 'import pypdf' 2>/dev/null
+}
+
+_recap_is_addr() {   # is this argument an address or a PDF file, rather than a mode or focus text?
+  local a="$1"
+  [[ "$a" == "~/"* ]] && a="$HOME/${a:2}"
+  [[ "$a" == http://* || "$a" == https://* || "$a" == www.* ]] && return 0
+  [[ "${a:l}" == *.pdf && ( -f "$a" || "$a" == /* || "$a" == ./* || "$a" == ../* ) ]] && return 0
+  return 1
+}
+
 _recap_url_one() {   # one address (web page or YouTube video) + optional mode or focus text; returns 1 if nothing was summarised
-  local url="$1" tmp info code words title slug srcfile http_status final cutoff=0 paywall=0 src_note is_yt=0 yt_lang yt_gen=0 yt_en=1 min_words=150
+  local url="$1" tmp info code words title slug srcfile http_status final cutoff=0 paywall=0 src_note is_yt=0 yt_lang yt_gen=0 yt_en=1 min_words=150 is_pdf=0 local_pdf=0 pdf_pages pg=""
   shift
   _RECAP_FIRST_MSG=""
-  [[ "$url" == http://* || "$url" == https://* ]] || url="https://$url"
+  [[ "$url" == "~/"* ]] && url="$HOME/${url:2}"
+  if [[ "${url:l}" == *.pdf && "$url" != http://* && "$url" != https://* ]]; then   # a PDF file on this Mac
+    if [[ -f "$url" ]]; then
+      is_pdf=1; local_pdf=1
+    elif [[ "$url" == /* || "$url" == ./* || "$url" == ../* ]]; then
+      _recap_msg -b "File not found: $url"
+      return 1
+    fi
+  fi
+  (( local_pdf )) || { [[ "$url" == http://* || "$url" == https://* ]] || url="https://$url"; }
 
   case "${url:l}" in
     *youtube.com/watch*|*youtube.com/shorts/*|*youtube.com/live/*|*youtube.com/embed/*|*youtube.com/v/*|*youtu.be/*)
@@ -475,14 +699,19 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
     *vimeo.com/*|*spotify.com/*|*podcasts.apple.com/*|*soundcloud.com/*|*.mp3|*.mp4|*.m4a|*.wav|*.mov|*.webm)
       _recap_msg -b "That looks like a video or audio link." "recapurl reads web articles and YouTube captions only."
       return 1 ;;
-    *.pdf)
-      _recap_msg -b "That looks like a PDF." "recapurl reads web pages only. Copy the text and use recap."
-      return 1 ;;
+    *.pdf|*.pdf\?*|*.pdf\#*)
+      is_pdf=1 ;;
   esac
 
   if (( is_yt )); then
     python3 -c 'import youtube_transcript_api' 2>/dev/null || {
       _recap_msg -b "youtube-transcript-api is not installed." "Run this, then try again:" "  python3 -m pip install youtube-transcript-api"
+      return 1
+    }
+    min_words=60
+  elif (( is_pdf )); then
+    _recap_has_pdf_reader || {
+      _recap_msg -b "No PDF reader is installed." "Run this, then try again:" "  python3 -m pip install pypdfium2"
       return 1
     }
     min_words=60
@@ -494,16 +723,28 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
   fi
 
   tmp=$(mktemp)
-  _recap_msg -b "Fetching:" "  $url"
+  if (( local_pdf )); then _recap_msg -b "Reading PDF file:" "  $url"; else _recap_msg -b "Fetching:" "  $url"; fi
   _RECAP_FIRST_MSG=""
   if (( is_yt )); then
     info=$(_recap_fetch_yt "$url" "$tmp"); code=$?
     yt_lang=$(print -r -- "$info" | sed -n 's/^lang=//p' | head -1)
     [[ "$info" == *generated=1* ]] && yt_gen=1
     [[ "$info" == *english=0* ]] && yt_en=0
+  elif (( is_pdf )); then
+    info=$(_recap_fetch_pdf "$url" "$tmp"); code=$?
   else
     info=$(_recap_fetch "$url" "$tmp"); code=$?
+    if (( code == 8 )); then   # the address serves a PDF without saying so in its name
+      is_pdf=1; min_words=60
+      _recap_has_pdf_reader || {
+        _recap_msg "That address is a PDF, and no PDF reader is installed." "Run this, then try again:" "  python3 -m pip install pypdfium2"
+        rm -f "$tmp"; return 1
+      }
+      info=$(_recap_fetch_pdf "$url" "$tmp"); code=$?
+    fi
   fi
+  pdf_pages=$(print -r -- "$info" | sed -n 's/^pages=//p' | head -1)
+  if [[ -n "$pdf_pages" ]]; then pg=" ($pdf_pages pages)"; [[ "$pdf_pages" == 1 ]] && pg=" (1 page)"; fi
   http_status=$(print -r -- "$info" | sed -n 's/^http=//p' | head -1)
   final=$(print -r -- "$info" | sed -n 's/^final=//p' | head -1)
   [[ "$info" == *cutoff=1* ]] && cutoff=1
@@ -520,6 +761,27 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
       *) _recap_msg "Could not read the captions ($(print -r -- "$info" | sed -n 's/^error=//p' | head -1))." "Nothing summarised." ;;
     esac
     [[ $code != 0 ]] && { rm -f "$tmp"; return 1; }
+  elif (( is_pdf )); then
+    case $code in
+      0) ;;
+      2) if (( local_pdf )); then _recap_msg "Could not read that file." "Nothing summarised."
+         else _recap_msg "No response from the site." "Possible causes: a network, security-certificate or timeout problem." "Nothing summarised."; fi ;;
+      3) _recap_msg "No readable text in this PDF$pg." "It is probably scanned pages, which are images. recapurl cannot read those." "Nothing summarised." ;;
+      4) case "$http_status" in
+           401|403|429) _recap_msg "The site answered with HTTP $http_status instead of the PDF." "That usually means it blocks automated downloads or needs a login." "Download the file in your browser and run recapurl on the saved file." ;;
+           404|410) _recap_msg "The site answered with HTTP $http_status instead of the PDF." "That usually means the address is wrong or the file was removed." ;;
+           *) _recap_msg "The site answered with HTTP $http_status instead of the PDF." "Try again later, or download it in your browser and run recapurl on the saved file." ;;
+         esac ;;
+      5) _recap_msg "This PDF is password-protected." "Nothing summarised." ;;
+      6) _recap_msg "That PDF is larger than ${RECAP_PDF_MAX_MB:-30} MB." "Nothing summarised. To raise the limit:" "  RECAP_PDF_MAX_MB=60 recapurl \"$url\"" ;;
+      9) _recap_msg "That link did not return a PDF." "It may be a web page or a login page." "Nothing summarised." ;;
+      *) if [[ "$info" == *error=DependencyError* ]]; then
+           _recap_msg "This PDF is encrypted in a way that needs one more package." "Run this, then try again:" "  python3 -m pip install cryptography"
+         else
+           _recap_msg "Could not read the PDF ($(print -r -- "$info" | sed -n 's/^error=//p' | head -1))." "The file may be damaged. Nothing summarised."
+         fi ;;
+    esac
+    [[ $code != 0 ]] && { rm -f "$tmp"; return 1; }
   else
   case $code in
     0) ;;
@@ -531,7 +793,7 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
          *) _recap_msg "The site answered with HTTP $http_status instead of the page." "Try again later, or copy the text and use recap." ;;
        esac
        rm -f "$tmp"; return 1 ;;
-    5) _recap_msg "The site redirected to a login or subscribe page:" "  $final" "Nothing summarised."
+    5) _recap_msg "The site redirected to a login or subscribe page." "  $final" "Nothing summarised."
        rm -f "$tmp"; return 1 ;;
     3) _recap_msg "No article text found on that page." "It may need a login or be built with scripts." "Nothing summarised."
        rm -f "$tmp"; return 1 ;;
@@ -551,10 +813,18 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
     if (( words < ${RECAP_URL_MIN:-$min_words} )); then
       if (( is_yt )); then
         _recap_msg "Only $words words of captions came back." "The video may be very short or mostly music." "Nothing summarised."
+      elif (( is_pdf )); then
+        _recap_msg "Only $words words of text came back." "The PDF may be mostly images or very short." "Nothing summarised."
       else
         _recap_msg "Only $words words came back." "The page may be paywalled, need a login or be mostly scripts." "Nothing summarised."
       fi
       _recap_msg "Extracted text saved so you can look:" "  $srcfile"
+      rm -f "$tmp"; return 1
+    fi
+    if (( words > ${RECAP_URL_MAX:-10000} )); then
+      _recap_msg "That is $words words: too long to summarise reliably in one go." "The part-by-part method is only tested up to about 6,600 words, and past roughly 10,000 words its notes probably no longer fit in the model's memory."
+      _recap_msg "Text saved so you can copy one chapter or section and use recaplong:" "  $srcfile"
+      _recap_msg "To try the whole text anyway, run:" "  RECAP_URL_MAX=$((words + 1000)) recapurl \"$url\""
       rm -f "$tmp"; return 1
     fi
     if (( paywall )); then
@@ -566,12 +836,18 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
   fi
   if (( is_yt )); then
     _recap_msg "Fetched $words words of captions ($yt_lang, $( ((yt_gen)) && print automatic || print uploaded by the channel ))." "Captions saved to:" "  $srcfile"
+  elif (( is_pdf )); then
+    _recap_msg "Read $words words$pg from the PDF." "Text saved to:" "  $srcfile"
+    if [[ "$info" == *reader=pypdf* ]]; then
+      _recap_msg "Note: this used the basic PDF reader (pypdf)." "Headers and small capitals can come out garbled. For cleaner text run:" "  python3 -m pip install pypdfium2"
+    fi
   else
     _recap_msg "Fetched $words words." "Extracted text saved to:" "  $srcfile"
   fi
   _recap_msg "Text starts:" "$(_recap_preview "$tmp")"
 
   src_note="$url"
+  (( is_pdf )) && src_note="$url (PDF)"
   if (( is_yt )); then
     src_note="$url (YouTube captions$( ((yt_gen)) && print ', automatic' ))"
     if (( yt_gen )); then
@@ -613,7 +889,7 @@ _recap_batch_mode() {   # $1 = mode from the flag (single|separate|empty); print
   print -r -- separate
 }
 
-# recapurl [--single | --separate] "ADDRESS" ["ADDRESS" ...] [short | changes | "focus text"]
+# recapurl [--single | --separate] "ADDRESS or PDF FILE" [...] [short | changes | "focus text"]
 # The first argument is always an address. Further arguments that start with http:// or https://
 # (or www.) are more addresses; anything after them is a mode or focus applied to every address.
 recapurl() {
@@ -622,7 +898,7 @@ recapurl() {
   while [[ "$1" == --single || "$1" == --separate ]]; do mode="${1#--}"; shift; done
   if [[ -z "$1" || "$1" == help || "$1" == -h || "$1" == --help ]]; then
     _recap_msg -b "Usage: recapurl [--single | --separate] \"ADDRESS\" [\"ADDRESS\" ...] [short | changes | \"focus text\"]" "Put each address in quotes (addresses with ? or & break otherwise)."
-    _recap_msg "Fetches a web article, strips menus and ads, and summarises it." "For a YouTube video it reads the captions. Not for other audio, video or PDF." "Several addresses are summarised one after another; extra ones must start with https://." "For several addresses, --single saves all summaries in one file and --separate gives each its own." "Without a flag it asks (or set RECAP_BATCH=single or separate). With one address the flags do nothing." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
+    _recap_msg "Fetches a web article, strips menus and ads, and summarises it." "For a YouTube video it reads the captions. A PDF (an address or a file on this Mac) is read too. Not for other audio or video." "Several are summarised one after another; extra ones must start with https:// or www., or be a .pdf file." "For several addresses, --single saves all summaries in one file and --separate gives each its own." "Without a flag it asks (or set RECAP_BATCH=single or separate). With one address the flags do nothing." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
     [[ -z "$1" ]] && return 1
     return 0
   fi
@@ -631,7 +907,7 @@ recapurl() {
     return 1
   fi
   urls=("$1"); shift
-  while [[ "$1" == http://* || "$1" == https://* || "$1" == www.* ]]; do urls+=("$1"); shift; done
+  while [[ -n "$1" ]] && _recap_is_addr "$1"; do urls+=("$1"); shift; done
 
   if (( ${#urls} == 1 )); then
     _recap_url_one "${urls[1]}" "$@"
