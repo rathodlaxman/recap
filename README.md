@@ -1,8 +1,8 @@
 # Recap
 
-A local, offline article summariser for macOS. Copy an article, type one word, read the gist.
+A local article summariser for macOS. Copy an article (or give a web address), type one word, read the gist.
 
-Everything runs on the machine through [Ollama](https://ollama.com) — no article text leaves the laptop, and it works without a network connection. Built and tuned on a MacBook Air M1 with 8 GB of RAM.
+Everything is summarised on the machine through [Ollama](https://ollama.com), so no article text is sent to any AI service. The clipboard commands (`recap`, `recaplong`, `recapall`, `recapmail`) work without a network connection. The address commands (`recapurl`, `recapurls`) need one, because they first fetch the page or the YouTube captions. Built and tuned on a MacBook Air M1 with 8 GB of RAM.
 
 ## What it does
 
@@ -12,10 +12,13 @@ Everything runs on the machine through [Ollama](https://ollama.com) — no artic
 | `recap short` | One sentence plus up to three takeaways |
 | `recap changes` | For circulars and rule changes: which clauses are new, which are unchanged, who acts and from when |
 | `recap "focus on costs"` | Summary with a focus you choose |
-| `recaplong` | Long articles and transcripts — reads the text in parts, then combines. Slower but far more accurate |
-| `recapall` | Several articles in one run, separated by lines containing only `@@@@` |
+| `recaplong` | Long articles and transcripts: reads the text in parts, then combines. Slower but far more accurate |
+| `recapall` | Several articles in one run, separated by lines containing only `@@@@`. An article over 4,000 words is read in parts automatically |
 | `recapc` | Same as `recap`, and also copies the summary to the clipboard |
 | `recapmail` | Short email summary: sender, tasks, deadlines, whether a reply is needed |
+| `recapurl "ADDRESS"` | Fetches a web article, or the captions of a YouTube video, and summarises it |
+| `recapurl "A" "B"` | Several addresses in one run. `--single` saves one combined file, `--separate` one file each |
+| `recapurls` | Summarises every web address on the clipboard, one per line (same flags) |
 | `recap help` | Lists the options |
 
 Every summary is written as Markdown to `~/Summaries/YYYY-MM-DD-title.md` and printed on screen.
@@ -30,15 +33,42 @@ printf 'FROM gemma4:e2b\nPARAMETER num_ctx 12288\nPARAMETER temperature 0.2\n' >
 ollama create gemma4-sum -f ~/Modelfile.g4
 ```
 
-Add the functions to the shell:
+Load the functions from `~/.zshrc` with one `source` line (run this in the repository folder):
 
 ```sh
-cat recap.zsh >> ~/.zshrc
+echo "source $PWD/recap.zsh" >> ~/.zshrc
 source ~/.zshrc
 recap help
 ```
 
+Use a `source` line and not a pasted copy: with two copies of a function, the old one can keep running.
+
 `recapmail` additionally needs `ollama pull llama3.2:3b`.
+
+`recapurl` and `recapurls` need two Python packages:
+
+```sh
+python3 -m pip install trafilatura youtube-transcript-api
+```
+
+## Web pages and YouTube
+
+```sh
+recapurl "https://example.com/article"
+recapurl "https://www.youtube.com/watch?v=VIDEOID"
+recapurl "https://example.com/article" "focus on costs"
+recapurl --single "https://example.com/one" "https://example.com/two"
+recapurls
+```
+
+Put every address in double quotes. Addresses containing `?` or `&` break otherwise.
+
+- **Web pages.** Menus, ads and comments are stripped (trafilatura), and the headline and byline are added. A page over 4,000 words is read in parts, the way `recaplong` does it. `short` and `changes` apply only below that length.
+- **YouTube.** The captions are read: English captions uploaded by the channel first, then YouTube's automatic English captions, then any language. The video title and channel are added at the top. The channel is the uploader, not necessarily the speaker. Channel and playlist pages, videos without captions, Vimeo, Spotify, audio, video files and PDFs are refused with a message.
+- **Files saved.** The summary gets a `Source:` line, marked `(YouTube captions, automatic)` or `(text appears cut off: possibly a paywalled teaser)` where that applies. The exact text the model read is saved next to it as `YYYY-MM-DD-title-source.txt`, so a summary can be checked against it. Long texts also save a `-notes.txt` file.
+- **It stops instead of summarising** when the page marks its article as members-only, when fewer than 150 words come back (60 for YouTube), when the site answers with an HTTP error (the status is shown), or when it redirects to a login page. `RECAP_URL_FORCE=1 recapurl "ADDRESS"` skips the paywall and short-text checks.
+- **Several addresses** run one after another. A failed address does not stop the rest, and the final list shows each failure with its reason. Extra addresses must start with `https://` or `www.`. A mode or focus placed after the addresses applies to all of them.
+- **One file or many.** For two or more addresses, `--single` saves one combined file and `--separate` gives each address its own. Without a flag, `RECAP_BATCH` decides, then the command asks once (only in a terminal), otherwise separate files are used. The combined file is `YYYY-MM-DD-batch-of-N-links.md`: one heading per summary, `---` between them, and a "Not summarised" section with reasons. In that mode no individual summary files are created. The source files are still saved, and the clipboard is not touched.
 
 ## How it is configured
 
@@ -56,7 +86,22 @@ ollama create gemma4-sum -f ~/Modelfile.g4
 ollama stop gemma4-sum
 ```
 
-Use a different model for a single run with `RECAP_MODEL=gemma-sum recap`. Override the output folder with `RECAP_DIR`, and the chunk size used by `recaplong` with `RECAP_CHUNK` (default 1200 words).
+Use a different model for a single run with `RECAP_MODEL=gemma-sum recap`.
+
+Alternatives were tried on one three-article batch each (5 Oct 2026). `phi4-mini` copied the example sentence from the prompt into its output and skipped the gist. `qwen3.5:4b` did not fit fully on the GPU of an 8 GB Mac (23%/77% CPU/GPU) and invented one figure. `gemma4:e2b` stays the default. One run each is guidance, not a measured result.
+
+Settings that can be put before a command, or exported in `~/.zshrc`:
+
+| Setting | Default | What it changes |
+| --- | --- | --- |
+| `RECAP_MODEL` | `gemma4-sum` | Model for one run |
+| `RECAP_DIR` | `~/Summaries` | Output folder |
+| `RECAP_CHUNK` | 1200 | Words per part when reading long text |
+| `RECAP_LONG_WORDS` | 4000 | Above this, `recapall` and `recapurl` read in parts |
+| `RECAP_OVERLAP` | 0.6 | How much a "Worth noting" bullet may repeat the main points before it is dropped (lower filters more) |
+| `RECAP_BATCH` | (ask) | `single` or `separate` for several addresses |
+| `RECAP_URL_MIN` | 150 (60 for YouTube) | Fewest words `recapurl` accepts |
+| `RECAP_URL_FORCE` | off | `1` skips the paywall and short-text checks |
 
 ## Length limits
 
@@ -68,7 +113,7 @@ The context window holds roughly 7,000 words, but accuracy can fall before that 
 | 1,500-4,500 words | Mostly good (a 4,400-word essay and a 1,200-word one checked clean); occasional dropped detail |
 | Above ~5,000 words | Meaning can reverse in a single pass. Use `recaplong` |
 
-One real failure found at length: in a 5,900-word essay the single-pass summary turned "without solitude there would be no America" into "independent thinking without solitude", reversing the argument. Because that failure came from a single run, treat the thresholds above as guidance, not a measured limit. `recaplong` reads long text in roughly 1,200-word parts and combines the notes; on a 6,600-word transcript it kept every claim checked accurate, but its "Worth noting" section repeated points.
+One real failure found at length: in a 5,900-word essay the single-pass summary turned "without solitude there would be no America" into "independent thinking without solitude", reversing the argument. Because that failure came from a single run, treat the thresholds above as guidance, not a measured limit. `recaplong` reads long text in roughly 1,200-word parts and combines the notes; on a 6,600-word transcript it kept every claim checked accurate, but its "Worth noting" section repeated points. A filter now drops "Worth noting" bullets that mostly repeat the main points, and it worked on the same transcript. `recapall`, `recapurl` and `recapurls` apply the part-by-part method automatically above 4,000 words.
 
 ## Known weaknesses
 
@@ -79,6 +124,11 @@ No invented facts were found in the summaries checked, but five faults repeat. T
 - **New versus unchanged rules.** In circulars, existing clauses can appear as if they were the changes. Use `recap changes`, then read the clauses it names.
 - **Flattened names.** "A journalist" or "a report" in place of the named person or publication.
 - **Figures.** A number belonging to one scenario can migrate to another.
+
+Two more apply to the address commands:
+
+- **Web extraction.** The text that comes back can be a paywall teaser, a notice or an advert, and the summary will describe it confidently. Read the "Text starts" lines and the saved `-source.txt` file. The stop messages catch the common cases, not all.
+- **YouTube automatic captions.** They have no speaker names, little punctuation and some misheard words, so attribution is the weakest point. Check names, figures and who said what against the video.
 
 Strongest on news, match reports, explainers, research write-ups and market pieces. Weakest on collections of quotes or anecdotes, where attribution slips most, and on regulatory texts.
 
