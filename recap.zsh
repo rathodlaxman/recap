@@ -2,7 +2,7 @@
 #  Recap - offline article summariser  (Ollama + Gemma 4)
 #  Add this block to ~/.zshrc, then run:  source ~/.zshrc
 #  Commands:  recap | recap short | recap changes | recaplong
-#             recapall | recapc | recapmail | recapurl | recap help
+#             recapall | recapc | recapmail | recapurl | recapurls | recap help
 # ============================================================
 
 RECAP_DIR="${RECAP_DIR:-$HOME/Summaries}"
@@ -79,8 +79,16 @@ _recap_src_line() {   # RECAP_SOURCE = address to show under the heading
 
 _recap_msg() {   # screen messages: each argument on its own line, then a blank line (stderr only)
   if [[ "$1" == "-b" ]]; then [[ -z "$RECAP_NO_LEAD" ]] && print -u2 ""; shift; fi   # -b: also a blank line before
+  [[ -z "$_RECAP_FIRST_MSG" ]] && _RECAP_FIRST_MSG="$1"   # first message of an address run = its failure reason
   print -u2 -rl -- "$@"
   print -u2 ""
+}
+
+_recap_preview() {   # $1 = file: its first 3 non-blank lines, each cut at a word boundary
+  grep -v '^[[:space:]]*$' "$1" | head -3 | awk '{
+    line = $0
+    if (length(line) > 100) { line = substr(line, 1, 100); sub(/[[:space:]]+[^[:space:]]*$/, "", line); line = line " ..." }
+    print "  " line }'
 }
 
 _recap_flags() {   # --think=false only for models that accept it
@@ -111,7 +119,9 @@ recap() {
   recapall            several articles separated by lines containing only @@@@
   recapc              same as recap, and also copies the summary to the clipboard
   recapmail           short email summary: sender, tasks, deadlines, reply needed
-  recapurl "ADDRESS"  fetch a web article and summarise it (quote the address; not video, audio or PDF)
+  recapurl "ADDRESS"  fetch a web article or YouTube captions and summarise (quote the address)
+  recapurl "A" "B"    several addresses, one after another (--single: one file, --separate: one each)
+  recapurls           summarise every web address on the clipboard (one per line; same flags)
   RECAP_MODEL=gemma-sum recap    use a different model for one run
   Summaries are saved as Markdown in ~/Summaries
 EOT
@@ -152,6 +162,12 @@ EOT
 
 _recap_save() {
   local out="$1" title="$2" slug file
+  if [[ -n "$RECAP_COLLECT" ]]; then   # recapurl --single: add to the combined file instead
+    [[ -s "$RECAP_COLLECT" ]] && { print -r -- "---"; print ""; } >> "$RECAP_COLLECT"
+    cat "$out" >> "$RECAP_COLLECT"
+    _recap_msg "Added to the combined file."
+    return
+  fi
   mkdir -p "$RECAP_DIR"
   slug=$(_recap_slug "$title")
   [[ -z "$slug" ]] && slug="summary"
@@ -287,6 +303,103 @@ recaplong() {
   rm -f "$tmp" "$out" "$sumf"
 }
 
+# --- YouTube captions ---------------------------------------------------
+# Exit codes of _recap_fetch_yt: 2 no video address in the link, 3 no captions, 4 video unavailable,
+# 5 sign-in / age check, 6 blocked by YouTube, 7 other error (error=Name). Other stdout: lang=Name generated=0|1
+_recap_fetch_yt() {   # $1 = address, $2 = output file
+  python3 - "$1" "$2" <<'PY'
+import html as htmllib
+import json
+import re
+import sys
+import urllib.parse
+import urllib.request
+
+url, out = sys.argv[1], sys.argv[2]
+
+def video_id(u):
+    p = urllib.parse.urlparse(u)
+    host = (p.hostname or "").lower()
+    cand = None
+    if host.endswith("youtu.be"):
+        cand = p.path.strip("/").split("/")[0]
+    elif "youtube.com" in host:
+        if p.path == "/watch":
+            cand = urllib.parse.parse_qs(p.query).get("v", [""])[0]
+        else:
+            m = re.match(r"^/(?:shorts|live|embed|v)/([^/?]+)", p.path)
+            cand = m.group(1) if m else None
+    return cand if cand and re.fullmatch(r"[A-Za-z0-9_-]{11}", cand) else None
+
+vid = video_id(url)
+if not vid:
+    sys.exit(2)
+
+try:
+    from youtube_transcript_api import YouTubeTranscriptApi
+    from youtube_transcript_api import (AgeRestricted, CouldNotRetrieveTranscript, InvalidVideoId, IpBlocked,
+        NoTranscriptFound, PoTokenRequired, RequestBlocked, TranscriptsDisabled, VideoUnavailable, VideoUnplayable)
+    transcripts = list(YouTubeTranscriptApi().list(vid))
+    if not transcripts:
+        sys.exit(3)
+    def english(t):
+        return t.language_code.split("-")[0].lower() == "en"
+    order = [
+        [t for t in transcripts if english(t) and not t.is_generated],
+        [t for t in transcripts if english(t) and t.is_generated],
+        [t for t in transcripts if not t.is_generated],
+        [t for t in transcripts if t.is_generated],
+    ]
+    chosen = next(group[0] for group in order if group)
+    fetched = chosen.fetch()
+except SystemExit:
+    raise
+except InvalidVideoId:
+    sys.exit(2)
+except (TranscriptsDisabled, NoTranscriptFound):
+    sys.exit(3)
+except (VideoUnavailable, VideoUnplayable):
+    sys.exit(4)
+except (AgeRestricted, PoTokenRequired):
+    sys.exit(5)
+except RequestBlocked:      # includes IpBlocked
+    sys.exit(6)
+except Exception as err:
+    print("error=" + type(err).__name__)
+    sys.exit(7)
+
+title, channel = "", ""
+try:
+    q = urllib.parse.quote("https://www.youtube.com/watch?v=" + vid, safe="")
+    req = urllib.request.Request("https://www.youtube.com/oembed?format=json&url=" + q,
+                                 headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=8) as r:
+        meta = json.loads(r.read().decode("utf-8"))
+    title, channel = (meta.get("title") or "").strip(), (meta.get("author_name") or "").strip()
+except Exception:
+    pass
+if not title:
+    title = "YouTube video " + vid
+
+text = " ".join(htmllib.unescape(sn.text).replace("\n", " ") for sn in fetched.snippets)
+text = re.sub(r"\[(?:music|applause|laughter|laughs|inaudible|silence|cheering|crosstalk|singing)\]", " ", text, flags=re.I)
+text = re.sub(r"\s*>>\s*", "\n\n", text)            # '>>' marks a change of speaker in captions
+paras = []
+for para in text.split("\n\n"):
+    ws = para.split()
+    paras += [" ".join(ws[i:i + 100]) for i in range(0, len(ws), 100)] + [""] if ws else []
+body = "\n".join(paras).strip()
+if not body:
+    sys.exit(3)
+head = title + "\n\n" + ("Channel: " + channel + "\n\n" if channel else "")
+with open(out, "w", encoding="utf-8") as f:
+    f.write(head + body + "\n")
+print("lang=" + re.sub(r"\s*\(auto-generated\)", "", fetched.language or fetched.language_code, flags=re.I))
+print("generated=" + ("1" if fetched.is_generated else "0"))
+print("english=" + ("1" if english(chosen) else "0"))
+PY
+}
+
 # --- web page: fetch, clean, summarise ------------------------------
 # Exit codes of _recap_fetch: 2 no response, 3 no article text, 4 HTTP error (http=NNN),
 # 5 redirected to a login page. Other lines on stdout: paywall=1  cutoff=1
@@ -347,39 +460,67 @@ PY
 # recapurl "ADDRESS" [short | changes | "focus text"]
 # Pages over RECAP_LONG_WORDS (default 4000) are read in parts, like recaplong.
 # The extracted text is saved as ~/Summaries/DATE-title-source.txt so you can check the summary against it.
-recapurl() {
-  local url="$1" tmp info code words title slug srcfile http_status final cutoff=0 paywall=0 src_note
-  if [[ -z "$url" || "$url" == help || "$url" == -h || "$url" == --help ]]; then
-    _recap_msg -b "Usage: recapurl \"ADDRESS\" [short | changes | \"focus text\"]" "Put the address in quotes (addresses with ? or & break otherwise)."
-    _recap_msg "Fetches a web article, strips menus and ads, and summarises it." "Not for video, audio or PDF." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
-    [[ -z "$url" ]] && return 1
-    return 0
-  fi
+_recap_url_one() {   # one address (web page or YouTube video) + optional mode or focus text; returns 1 if nothing was summarised
+  local url="$1" tmp info code words title slug srcfile http_status final cutoff=0 paywall=0 src_note is_yt=0 yt_lang yt_gen=0 yt_en=1 min_words=150
   shift
+  _RECAP_FIRST_MSG=""
   [[ "$url" == http://* || "$url" == https://* ]] || url="https://$url"
 
   case "${url:l}" in
-    *youtube.com/*|*youtu.be/*|*vimeo.com/*|*spotify.com/*|*podcasts.apple.com/*|*soundcloud.com/*|*.mp3|*.mp4|*.m4a|*.wav|*.mov|*.webm)
-      _recap_msg -b "That looks like a video or audio link." "recapurl reads web articles only."
+    *youtube.com/watch*|*youtube.com/shorts/*|*youtube.com/live/*|*youtube.com/embed/*|*youtube.com/v/*|*youtu.be/*)
+      is_yt=1 ;;
+    *youtube.com/*)
+      _recap_msg -b "That looks like a YouTube channel, playlist or search page." "Give the link to a single video."
+      return 1 ;;
+    *vimeo.com/*|*spotify.com/*|*podcasts.apple.com/*|*soundcloud.com/*|*.mp3|*.mp4|*.m4a|*.wav|*.mov|*.webm)
+      _recap_msg -b "That looks like a video or audio link." "recapurl reads web articles and YouTube captions only."
       return 1 ;;
     *.pdf)
       _recap_msg -b "That looks like a PDF." "recapurl reads web pages only. Copy the text and use recap."
       return 1 ;;
   esac
 
-  python3 -c 'import trafilatura' 2>/dev/null || {
-    _recap_msg -b "trafilatura is not installed." "Run this, then try again:" "  python3 -m pip install trafilatura"
-    return 1
-  }
+  if (( is_yt )); then
+    python3 -c 'import youtube_transcript_api' 2>/dev/null || {
+      _recap_msg -b "youtube-transcript-api is not installed." "Run this, then try again:" "  python3 -m pip install youtube-transcript-api"
+      return 1
+    }
+    min_words=60
+  else
+    python3 -c 'import trafilatura' 2>/dev/null || {
+      _recap_msg -b "trafilatura is not installed." "Run this, then try again:" "  python3 -m pip install trafilatura"
+      return 1
+    }
+  fi
 
   tmp=$(mktemp)
   _recap_msg -b "Fetching:" "  $url"
-  info=$(_recap_fetch "$url" "$tmp"); code=$?
+  _RECAP_FIRST_MSG=""
+  if (( is_yt )); then
+    info=$(_recap_fetch_yt "$url" "$tmp"); code=$?
+    yt_lang=$(print -r -- "$info" | sed -n 's/^lang=//p' | head -1)
+    [[ "$info" == *generated=1* ]] && yt_gen=1
+    [[ "$info" == *english=0* ]] && yt_en=0
+  else
+    info=$(_recap_fetch "$url" "$tmp"); code=$?
+  fi
   http_status=$(print -r -- "$info" | sed -n 's/^http=//p' | head -1)
   final=$(print -r -- "$info" | sed -n 's/^final=//p' | head -1)
   [[ "$info" == *cutoff=1* ]] && cutoff=1
   [[ "$info" == *paywall=1* ]] && paywall=1
 
+  if (( is_yt )); then
+    case $code in
+      0) ;;
+      2) _recap_msg "Could not find a video in that link." "Nothing summarised." ;;
+      3) _recap_msg "This video has no captions available." "The owner may have turned them off. recapurl cannot summarise a video without captions." "Nothing summarised." ;;
+      4) _recap_msg "YouTube says the video is unavailable." "It may be private, removed, or not viewable in your region." "Nothing summarised." ;;
+      5) _recap_msg "YouTube wants a sign-in or age check for this video." "Nothing summarised." ;;
+      6) _recap_msg "YouTube blocked the request." "This sometimes clears after a while or on another network." "You can also open the video, choose Show transcript, copy the text and use recap." "Nothing summarised." ;;
+      *) _recap_msg "Could not read the captions ($(print -r -- "$info" | sed -n 's/^error=//p' | head -1))." "Nothing summarised." ;;
+    esac
+    [[ $code != 0 ]] && { rm -f "$tmp"; return 1; }
+  else
   case $code in
     0) ;;
     2) _recap_msg "No response from the site." "Possible causes: a network, security-certificate or timeout problem." "Nothing summarised."
@@ -397,6 +538,7 @@ recapurl() {
     *) _recap_msg "Could not read the page (error $code)." "Nothing summarised."
        rm -f "$tmp"; return 1 ;;
   esac
+  fi
 
   words=$(wc -w < "$tmp" | tr -d ' ')
   title=$(_recap_title "$tmp")
@@ -406,8 +548,12 @@ recapurl() {
   { print -r -- "Source: $url"; print ""; cat "$tmp"; } > "$srcfile"
 
   if [[ "$RECAP_URL_FORCE" != 1 ]]; then
-    if (( words < ${RECAP_URL_MIN:-150} )); then
-      _recap_msg "Only $words words came back." "The page may be paywalled, need a login or be mostly scripts." "Nothing summarised."
+    if (( words < ${RECAP_URL_MIN:-$min_words} )); then
+      if (( is_yt )); then
+        _recap_msg "Only $words words of captions came back." "The video may be very short or mostly music." "Nothing summarised."
+      else
+        _recap_msg "Only $words words came back." "The page may be paywalled, need a login or be mostly scripts." "Nothing summarised."
+      fi
       _recap_msg "Extracted text saved so you can look:" "  $srcfile"
       rm -f "$tmp"; return 1
     fi
@@ -418,10 +564,23 @@ recapurl() {
       rm -f "$tmp"; return 1
     fi
   fi
-  _recap_msg "Fetched $words words." "Extracted text saved to:" "  $srcfile"
-  _recap_msg "Text starts:" "  $(head -c 160 "$tmp" | tr '\n' ' ')"
+  if (( is_yt )); then
+    _recap_msg "Fetched $words words of captions ($yt_lang, $( ((yt_gen)) && print automatic || print uploaded by the channel ))." "Captions saved to:" "  $srcfile"
+  else
+    _recap_msg "Fetched $words words." "Extracted text saved to:" "  $srcfile"
+  fi
+  _recap_msg "Text starts:" "$(_recap_preview "$tmp")"
 
   src_note="$url"
+  if (( is_yt )); then
+    src_note="$url (YouTube captions$( ((yt_gen)) && print ', automatic' ))"
+    if (( yt_gen )); then
+      _recap_msg "Note: these are YouTube's automatic captions." "They have no speaker names, little punctuation, and some misheard words." "Check names, figures and who said what against the video."
+    fi
+    if (( ! yt_en )); then
+      _recap_msg "Note: the captions are in $yt_lang." "How well the summary works in that language is untested."
+    fi
+  fi
   if (( cutoff )); then
     _recap_msg "Warning: the text ends mid-sentence." "The page may be a paywalled teaser, so the summary may cover only part of the article."
     src_note="$url (text appears cut off: possibly a paywalled teaser)"
@@ -438,6 +597,103 @@ recapurl() {
     RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recap "$@"
   fi
   rm -f "$tmp"
+  return 0
+}
+
+# Which way to save a batch: flag, then RECAP_BATCH, then ask (only in a terminal), else separate files.
+_recap_batch_mode() {   # $1 = mode from the flag (single|separate|empty); prints single or separate
+  local m="$1" ans
+  [[ -z "$m" ]] && m="$RECAP_BATCH"
+  case "$m" in single|separate) print -r -- "$m"; return ;; esac
+  if [[ -t 0 && -t 2 ]]; then
+    read -k 1 "ans?Save all summaries in one file, or one file per address? [o = one file, s = separate, Enter = separate] "
+    print -u2 ""
+    [[ "$ans" == [oO] ]] && { print -r -- single; return; }
+  fi
+  print -r -- separate
+}
+
+# recapurl [--single | --separate] "ADDRESS" ["ADDRESS" ...] [short | changes | "focus text"]
+# The first argument is always an address. Further arguments that start with http:// or https://
+# (or www.) are more addresses; anything after them is a mode or focus applied to every address.
+recapurl() {
+  local -a urls failed reasons lines
+  local i=0 ok=0 j u mode="" coll="" final=""
+  while [[ "$1" == --single || "$1" == --separate ]]; do mode="${1#--}"; shift; done
+  if [[ -z "$1" || "$1" == help || "$1" == -h || "$1" == --help ]]; then
+    _recap_msg -b "Usage: recapurl [--single | --separate] \"ADDRESS\" [\"ADDRESS\" ...] [short | changes | \"focus text\"]" "Put each address in quotes (addresses with ? or & break otherwise)."
+    _recap_msg "Fetches a web article, strips menus and ads, and summarises it." "For a YouTube video it reads the captions. Not for other audio, video or PDF." "Several addresses are summarised one after another; extra ones must start with https://." "For several addresses, --single saves all summaries in one file and --separate gives each its own." "Without a flag it asks (or set RECAP_BATCH=single or separate). With one address the flags do nothing." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
+    [[ -z "$1" ]] && return 1
+    return 0
+  fi
+  if [[ "$1" == --* ]]; then
+    _recap_msg -b "Unknown option: $1" "Options: --single, --separate (only used with several addresses)."
+    return 1
+  fi
+  urls=("$1"); shift
+  while [[ "$1" == http://* || "$1" == https://* || "$1" == www.* ]]; do urls+=("$1"); shift; done
+
+  if (( ${#urls} == 1 )); then
+    _recap_url_one "${urls[1]}" "$@"
+    return $?
+  fi
+
+  mode=$(_recap_batch_mode "$mode")
+  if [[ "$mode" == single ]]; then
+    coll=$(mktemp)
+    _recap_msg -b "Saving all summaries in one combined file."
+  else
+    _recap_msg -b "Saving one file per address."
+  fi
+
+  for u in "${urls[@]}"; do
+    i=$((i+1))
+    _recap_msg -b "Link $i of ${#urls}"
+    if RECAP_COLLECT="$coll" RECAP_NO_LEAD=1 _recap_url_one "$u" "$@"; then
+      ok=$((ok+1))
+    else
+      failed+=("$u"); reasons+=("$_RECAP_FIRST_MSG")
+    fi
+  done
+
+  if [[ -n "$coll" ]]; then
+    if (( ok > 0 )); then
+      final=$(mktemp)
+      {
+        print -r -- "# $ok link summaries, $(date +%Y-%m-%d)"; print ""
+        cat "$coll"
+        if (( ${#failed} )); then
+          print ""; print -r -- "## Not summarised"; print ""
+          for ((j=1; j<=${#failed}; j++)); do print -r -- "- ${failed[j]}"; print -r -- "  ${reasons[j]}"; done
+        fi
+      } > "$final"
+      _recap_save "$final" "batch-of-$ok-links"
+      rm -f "$final"
+    fi
+    rm -f "$coll"
+  fi
+
+  if (( ${#failed} )); then
+    for ((j=1; j<=${#failed}; j++)); do lines+=("  ${failed[j]}" "    ${reasons[j]}"); done
+    _recap_msg -b "Finished: $ok of ${#urls} summarised." "Not summarised:" "${lines[@]}"
+  else
+    _recap_msg -b "Finished: all ${#urls} summarised."
+  fi
+  (( ${#failed} == 0 ))
+}
+
+# recapurls [--single | --separate] ["focus text"]: summarise every web address found on the clipboard
+# (one per line, anything else is ignored)
+recapurls() {
+  local -a urls flags
+  while [[ "$1" == --single || "$1" == --separate ]]; do flags+=("$1"); shift; done
+  urls=(${(f)"$(pbpaste | tr -d '\r' | grep -Eo 'https?://[^[:space:]]+' | sed -E 's/[.,;:)>]+$//' | awk '!seen[$0]++')"})
+  if (( ${#urls} == 0 )); then
+    _recap_msg -b "No web addresses found on the clipboard." "Copy the addresses first, one per line, each starting with http:// or https://."
+    return 1
+  fi
+  _recap_msg -b "Found ${#urls} address(es) on the clipboard:" "${(@)urls/#/  }"
+  recapurl "${flags[@]}" "${urls[@]}" "$@"
 }
 
 # --- email ----------------------------------------------------------
