@@ -108,6 +108,13 @@ _recap_preview() {   # $1 = file: its first 3 non-blank lines, each cut at a wor
     print "  " line }'
 }
 
+_recap_looks_like_command() {   # $1 = file: is its first line a Recap or clipboard command (copied by mistake)?
+  local first
+  first=$(grep -m1 -v '^[[:space:]]*$' "$1" | tr -d '\r')
+  [[ "$first" =~ '^(recap[a-z]*|pbcopy|pbpaste)([[:space:]]|$)' ]] || return 1
+  print -r -- "$first"
+}
+
 _recap_flags() {   # --think=false only for models that accept it
   case "$1" in
     gemma4*|qwen*) print -r -- "--think=false" ;;
@@ -117,7 +124,7 @@ _recap_flags() {   # --think=false only for models that accept it
 
 # --- one article ---------------------------------------------------
 recap() {
-  local mode="$1" extra="" tmp title words model base
+  local mode="$1" extra="" tmp title words model base first
   model="${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}"
   local -a tf
   tf=(${=$(_recap_flags "$model")})
@@ -157,7 +164,11 @@ EOT
   title=$(_recap_title "$tmp")
 
   if (( words < 20 )); then
-    _recap_msg -b "Only $words words found." "Copy the article first (Command + C), or give a file: recap < file.txt"
+    if first=$(_recap_looks_like_command "$tmp"); then
+      _recap_msg -b "The clipboard holds a command, not an article: $first" "Copying a command (for example from a web page or a chat) replaces the article you copied before it." "Copy the article again, then TYPE the command instead of copying it. Or give Recap the file: recap < file.txt"
+    else
+      _recap_msg -b "Only $words words found." "Copy the article first (Command + C), or give a file: recap < file.txt"
+    fi
     rm -f "$tmp"; return 1
   fi
 
@@ -299,7 +310,7 @@ recapall() {
 
 # --- long article or transcript (reads it in parts) -----------------
 recaplong() {
-  local tmp out title words
+  local tmp out title words first
   tmp=$(mktemp); out=$(mktemp)
 
   _recap_input | tr -d '\r' > "$tmp"
@@ -307,7 +318,11 @@ recaplong() {
   title=$(_recap_title "$tmp")
 
   if (( words < 20 )); then
-    _recap_msg -b "Only $words words found." "Copy the text first (Command + C), or give a file: recaplong < file.txt"
+    if first=$(_recap_looks_like_command "$tmp"); then
+      _recap_msg -b "The clipboard holds a command, not a text: $first" "Copying a command replaces the text you copied before it." "Copy the text again, then TYPE the command instead of copying it. Or give Recap the file: recaplong < file.txt"
+    else
+      _recap_msg -b "Only $words words found." "Copy the text first (Command + C), or give a file: recaplong < file.txt"
+    fi
     rm -f "$tmp" "$out"; return 1
   fi
 

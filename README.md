@@ -39,7 +39,7 @@ Start with the samples, which need no internet and finish quickly. Then try a we
 
 ### Text from a file, or text you copy (works offline)
 
-Give Recap a file with `<`, or copy text yourself (select it, press Command + C) and run the command with nothing after it. Run these from the Recap folder:
+Give Recap a file with `<`, or copy text yourself (select it, press Command + C) and run the command with nothing after it. **If you copy text, type the command; do not copy it from a web page or a chat**, because copying the command replaces your text on the clipboard. Giving a file with `<` has no such problem. Run these from the Recap folder:
 
 ```sh
 recap < samples/sample-article.txt

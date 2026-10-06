@@ -36,6 +36,8 @@ Ollama is the program that runs the AI model on your Mac.
 
 **How to use the commands in this guide:** each command is in a grey box. Select the text in the box, copy it (**Command + C**), click in the Terminal window, paste it (**Command + V**), and press **Return**.
 
+**One important exception.** Copying a command replaces whatever was on your clipboard. So whenever a step tells you to copy some text first (such as an article), **type the command yourself** instead of copying it from this page. Otherwise Recap finds your command, not your article. (The steps that give Recap a file with `<` do not have this problem.)
+
 ## Step 4. Go to the Recap folder
 
 1. In Terminal, type the letters `cd` and then a **space**. Do not press Return yet.
@@ -122,7 +124,7 @@ Very long pages take many minutes, and pages over 10,000 words are refused with 
 
 1. Open any article and select all the text (**Command + A**).
 2. Copy it (**Command + C**).
-3. Go to Terminal and type:
+3. Go to Terminal and **type** the command yourself. Do not copy it from this page: that would replace the article you just copied.
 
 ```
 recap
@@ -155,7 +157,7 @@ If your text is in a file instead, give Recap the file: `recap < myfile.txt`.
 
 | What you see | What to do |
 | --- | --- |
-| "Only 1 words found" (or another very small number) | Recap found almost nothing to read: the copy did not work. Copy the text again (Command + C), or skip the clipboard and give Recap the file: `recap < myfile.txt`. |
+| "The clipboard holds a command, not an article", or "Only 1 words found" (a very small number) | Almost always you copied the command after copying the article, and the command replaced the article. Copy the article again, then **type** `recap` (do not copy it). Or skip the clipboard and give Recap the file: `recap < myfile.txt`. |
 | `command not found: recap` | Recap is not switched on in this window. Type `source ~/.zshrc`. If that does not help, repeat Steps 4 and 5. |
 | `no matches found` or strange errors with an address | The quote marks are missing or curly. Put the address in plain straight quotes `"`. |
 | "Ollama is installed but not running" | Open the Ollama app (Step 1), wait a few seconds, and try again. |

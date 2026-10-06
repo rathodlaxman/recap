@@ -11,6 +11,7 @@ First public release.
 - Summaries of copied text: `recap` (with `short`, `changes` and your own focus), `recaplong` for long texts, `recapall` for several articles at once, `recapc` to copy the result, and `recapmail` for emails. One model, `gemma4-sum`, does every job; `RECAP_MAIL_MODEL` can give `recapmail` a different one.
 - `recapurl` and `recapurls`: summarise a web article, a YouTube video's captions, or a PDF (an address or a file on the Mac), one or several at a time, with `--single` or `--separate` output.
 - Every command that takes text also accepts a file or a pipe: `recap < file.txt`, `cat file.txt | recap`. With nothing given, it reads the clipboard. `recapc` accepts a mode and a file too.
+- A clear message when the clipboard holds a command instead of text (for example after copying `recap` from a web page), and how to fix it.
 - Checks that stop instead of summarising a paywall notice, an error page, a scanned PDF, or text over 10,000 words.
 - `recapsetup`, a one-time setup that installs the Python packages in a private environment and downloads and builds the summarising model, and `recapdoctor`, which checks the whole setup. `recap version` shows the version.
 - Summaries are saved as Markdown in `~/Summaries`, with the source text kept beside them for address runs.
