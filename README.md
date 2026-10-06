@@ -28,6 +28,18 @@ Everything Recap saves is plain, unencrypted text: summaries, source texts and n
 
 Summaries come from a small local model and can be wrong. In testing, no invented facts were found in the summaries checked, but meaning errors did occur: dropped hedges, wrong attribution, swapped figures, and in one long text a reversed argument (see "Known weaknesses"). Treat a summary as a map of the article, never as the final word, and check the source before relying on it. Do not use a summary alone for a legal, medical or financial decision.
 
+## Sensitive material
+
+Recap summarises on your Mac, so copied text and PDF files already on the Mac are not sent to an AI service. It is not audited or certified, and this README makes no claim that it meets any organisation's security or compliance requirements. Before using it on official, confidential or regulated material, check what your organisation permits. Weigh these points:
+
+- Setup downloads Ollama, models and Python packages from the internet, and offline installation is not documented.
+- The address commands contact the sites you name.
+- Saved files and clipboard contents are unencrypted.
+- Summaries can be wrong in meaning.
+- It is maintained by one person on a best-effort basis.
+
+To report a security problem privately, see `SECURITY.md`.
+
 ## What it does
 
 | Command | What it does |
@@ -46,6 +58,7 @@ Summaries come from a small local model and can be wrong. In testing, no invente
 | `recapsetup` | Creates or updates the private Python environment that `recapurl` and `recapurls` use |
 | `recapdoctor` | Checks the whole setup and says what to fix. Safe to paste into a bug report |
 | `recap help` | Lists the options |
+| `recap version` | Shows which version of Recap this is |
 
 Every summary is written as Markdown to `~/Summaries/YYYY-MM-DD-title.md` and printed on screen.
 
@@ -57,6 +70,8 @@ Get the code, and install [Ollama](https://ollama.com) if you do not have it:
 git clone https://github.com/rathodlaxman/recap.git
 cd recap
 ```
+
+Or use the green Code button on the repository page and choose Download ZIP, then unzip it and open Terminal in that folder.
 
 Then build the model:
 
@@ -224,7 +239,15 @@ The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model n
 - `MANUAL.pdf` — printable reference
 - `README.md` — this file
 - `LICENSE` — the MIT licence
+- `CHANGELOG.md` — what changed in each version
+- `CONTRIBUTING.md` — how to report a problem or send a change
+- `SECURITY.md` — how to report a security problem privately
+- `.github/` — issue and pull request templates
 - `.gitignore` — files git should skip
+
+## Contributing and security
+
+Bug reports and ideas are welcome. See `CONTRIBUTING.md` for how to report a problem or send a change, and for the project's conventions. Please do not paste private text into a public issue. Security problems are reported privately: see `SECURITY.md`. Changes between versions are listed in `CHANGELOG.md`.
 
 ## Licence and support
 

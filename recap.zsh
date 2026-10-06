@@ -7,6 +7,7 @@
 
 RECAP_DIR="${RECAP_DIR:-$HOME/Summaries}"
 RECAP_HOME="${RECAP_HOME:-$HOME/.recap}"
+RECAP_VERSION="1.0.0"
 RECAP_MODEL_DEFAULT="gemma4-sum"
 
 # --- which Python runs the address commands ---------------------------
@@ -118,6 +119,7 @@ recap() {
   case "$mode" in
     short) base="Summarise the text below in one sentence, then give up to 3 short bullet takeaways in Markdown, each beginning with '- '. Start with the summary itself, never an introduction. Use 'The editorial argues' only for a newspaper's own editorial, and then present the claims as the author's. Say exactly who said each thing. Keep hedges and the strength of wording. Write numbers in digits. Attach each figure only to what the text attaches it to. Use only the main article; ignore related links, sidebars, addresses, signatures and disclaimers. Do not ask me any questions." ;;
     changes) extra="Special focus for this summary: the text changes an earlier rule or circular. State clearly which clauses or points are new or changed, using their clause numbers, and which are existing or unchanged. Then say who must act and from when. Mention the number and date of the earlier circular only as the one being modified." ;;
+    version|-V|--version) print -r -- "Recap $RECAP_VERSION"; return ;;
     help|-h|--help)
       cat <<'EOT'
   recap               adaptive summary of whatever is on the clipboard
@@ -133,6 +135,7 @@ recap() {
   recapurls           summarise every web address on the clipboard (one per line; same flags)
   recapsetup          create or update the private Python environment the address commands use
   recapdoctor         check the whole setup and say what to fix
+  recap version       show which version of Recap this is
   RECAP_MODEL=gemma-sum recap    use a different model for one run
   Summaries are saved as Markdown in ~/Summaries
 EOT
@@ -1031,7 +1034,7 @@ recapdoctor() {
     print -r -- "$list" | awk 'NR>1 {print $1}' | grep -qx -- "$want"
   }
   print ""
-  print "Recap check"
+  print "Recap check (version $RECAP_VERSION)"
   print ""
   print "System"
   if [[ "$(uname -s)" == Darwin ]]; then
