@@ -2,11 +2,20 @@
 #  Recap - offline article summariser  (Ollama + Gemma 4)
 #  Add this block to ~/.zshrc, then run:  source ~/.zshrc
 #  Commands:  recap | recap short | recap changes | recaplong
-#             recapall | recapc | recapmail | recapurl | recapurls | recap help
+#             recapall | recapc | recapmail | recapurl | recapurls | recapsetup | recapdoctor | recap help
 # ============================================================
 
 RECAP_DIR="${RECAP_DIR:-$HOME/Summaries}"
+RECAP_HOME="${RECAP_HOME:-$HOME/.recap}"
 RECAP_MODEL_DEFAULT="gemma4-sum"
+
+# --- which Python runs the address commands ---------------------------
+_recap_py() {   # RECAP_PYTHON if set, else the private environment made by recapsetup, else python3 from the PATH
+  if [[ -n "$RECAP_PYTHON" ]]; then print -r -- "$RECAP_PYTHON"
+  elif [[ -x "$RECAP_HOME/venv/bin/python" ]]; then print -r -- "$RECAP_HOME/venv/bin/python"
+  else print -r -- python3
+  fi
+}
 
 # --- shared prompt -------------------------------------------------
 _recap_prompt() {
@@ -122,6 +131,8 @@ recap() {
   recapurl "ADDRESS"  fetch a web article or YouTube captions, or read a PDF (address or file), and summarise (quote it)
   recapurl "A" "B"    several addresses, one after another (--single: one file, --separate: one each)
   recapurls           summarise every web address on the clipboard (one per line; same flags)
+  recapsetup          create or update the private Python environment the address commands use
+  recapdoctor         check the whole setup and say what to fix
   RECAP_MODEL=gemma-sum recap    use a different model for one run
   Summaries are saved as Markdown in ~/Summaries
 EOT
@@ -307,7 +318,7 @@ recaplong() {
 # Exit codes of _recap_fetch_yt: 2 no video address in the link, 3 no captions, 4 video unavailable,
 # 5 sign-in / age check, 6 blocked by YouTube, 7 other error (error=Name). Other stdout: lang=Name generated=0|1
 _recap_fetch_yt() {   # $1 = address, $2 = output file
-  python3 - "$1" "$2" <<'PY'
+  "$(_recap_py)" - "$1" "$2" <<'PY'
 import html as htmllib
 import json
 import re
@@ -404,7 +415,7 @@ PY
 # Exit codes of _recap_fetch_pdf: 2 no response or unreadable file, 3 no readable text (scanned), 4 HTTP error (http=NNN),
 # 5 password-protected, 6 too large, 7 other error (error=Name), 9 not a PDF. Other stdout: pages=N reader=pdfium|pypdf
 _recap_fetch_pdf() {   # $1 = address or file path, $2 = output file
-  python3 - "$1" "$2" <<'PY'
+  "$(_recap_py)" - "$1" "$2" <<'PY'
 import io
 import logging
 import os
@@ -605,7 +616,7 @@ PY
 # Exit codes of _recap_fetch: 2 no response, 3 no article text, 4 HTTP error (http=NNN), 8 it is a PDF,
 # 5 redirected to a login page. Other lines on stdout: paywall=1  cutoff=1
 _recap_fetch() {   # $1 = address, $2 = output file
-  python3 - "$1" "$2" <<'PY'
+  "$(_recap_py)" - "$1" "$2" <<'PY'
 import re
 import sys
 import trafilatura
@@ -664,7 +675,8 @@ PY
 # Pages over RECAP_LONG_WORDS (default 4000) are read in parts, like recaplong.
 # The extracted text is saved as ~/Summaries/DATE-title-source.txt so you can check the summary against it.
 _recap_has_pdf_reader() {   # pypdfium2 (cleaner text) or pypdf
-  python3 -c 'import pypdfium2' 2>/dev/null || python3 -c 'import pypdf' 2>/dev/null
+  local py; py="$(_recap_py)"
+  "$py" -c 'import pypdfium2' 2>/dev/null || "$py" -c 'import pypdf' 2>/dev/null
 }
 
 _recap_is_addr() {   # is this argument an address or a PDF file, rather than a mode or focus text?
@@ -704,20 +716,20 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
   esac
 
   if (( is_yt )); then
-    python3 -c 'import youtube_transcript_api' 2>/dev/null || {
-      _recap_msg -b "youtube-transcript-api is not installed." "Run this, then try again:" "  python3 -m pip install youtube-transcript-api"
+    "$(_recap_py)" -c 'import youtube_transcript_api' 2>/dev/null || {
+      _recap_msg -b "youtube-transcript-api is not installed." "Run this, then try again:" "  recapsetup"
       return 1
     }
     min_words=60
   elif (( is_pdf )); then
     _recap_has_pdf_reader || {
-      _recap_msg -b "No PDF reader is installed." "Run this, then try again:" "  python3 -m pip install pypdfium2"
+      _recap_msg -b "No PDF reader is installed." "Run this, then try again:" "  recapsetup"
       return 1
     }
     min_words=60
   else
-    python3 -c 'import trafilatura' 2>/dev/null || {
-      _recap_msg -b "trafilatura is not installed." "Run this, then try again:" "  python3 -m pip install trafilatura"
+    "$(_recap_py)" -c 'import trafilatura' 2>/dev/null || {
+      _recap_msg -b "trafilatura is not installed." "Run this, then try again:" "  recapsetup"
       return 1
     }
   fi
@@ -737,7 +749,7 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
     if (( code == 8 )); then   # the address serves a PDF without saying so in its name
       is_pdf=1; min_words=60
       _recap_has_pdf_reader || {
-        _recap_msg "That address is a PDF, and no PDF reader is installed." "Run this, then try again:" "  python3 -m pip install pypdfium2"
+        _recap_msg "That address is a PDF, and no PDF reader is installed." "Run this, then try again:" "  recapsetup"
         rm -f "$tmp"; return 1
       }
       info=$(_recap_fetch_pdf "$url" "$tmp"); code=$?
@@ -776,7 +788,7 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
       6) _recap_msg "That PDF is larger than ${RECAP_PDF_MAX_MB:-30} MB." "Nothing summarised. To raise the limit:" "  RECAP_PDF_MAX_MB=60 recapurl \"$url\"" ;;
       9) _recap_msg "That link did not return a PDF." "It may be a web page or a login page." "Nothing summarised." ;;
       *) if [[ "$info" == *error=DependencyError* ]]; then
-           _recap_msg "This PDF is encrypted in a way that needs one more package." "Run this, then try again:" "  python3 -m pip install cryptography"
+           _recap_msg "This PDF is encrypted in a way the basic PDF reader cannot open." "Run this, then try again:" "  recapsetup"
          else
            _recap_msg "Could not read the PDF ($(print -r -- "$info" | sed -n 's/^error=//p' | head -1))." "The file may be damaged. Nothing summarised."
          fi ;;
@@ -839,7 +851,7 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
   elif (( is_pdf )); then
     _recap_msg "Read $words words$pg from the PDF." "Text saved to:" "  $srcfile"
     if [[ "$info" == *reader=pypdf* ]]; then
-      _recap_msg "Note: this used the basic PDF reader (pypdf)." "Headers and small capitals can come out garbled. For cleaner text run:" "  python3 -m pip install pypdfium2"
+      _recap_msg "Note: this used the basic PDF reader (pypdf)." "Headers and small capitals can come out garbled. For cleaner text run:" "  recapsetup"
     fi
   else
     _recap_msg "Fetched $words words." "Extracted text saved to:" "  $srcfile"
@@ -970,6 +982,136 @@ recapurls() {
   fi
   _recap_msg -b "Found ${#urls} address(es) on the clipboard:" "${(@)urls/#/  }"
   recapurl "${flags[@]}" "${urls[@]}" "$@"
+}
+
+# --- Python environment: setup and health check ----------------------
+# recapsetup: create (or update) Recap's private Python environment in $RECAP_HOME/venv and install the
+# packages the address commands need. Your own Python is not touched. Run it again to upgrade the packages.
+recapsetup() {
+  local base="${RECAP_BASE_PYTHON:-python3}" venv="$RECAP_HOME/venv" out ver
+  if ! command -v "$base" >/dev/null 2>&1; then
+    _recap_msg -b "Python 3 was not found ($base)." "Install it from python.org or with Homebrew (brew install python), then run recapsetup again."
+    return 1
+  fi
+  if ! "$base" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' 2>/dev/null; then
+    ver=$("$base" -c 'import sys; print(sys.version.split()[0])' 2>/dev/null)
+    _recap_msg -b "Python ${ver:-?} is too old: Recap needs Python 3.9 or newer." "Install a newer Python, then run:" "  RECAP_BASE_PYTHON=/path/to/python3 recapsetup"
+    return 1
+  fi
+  if [[ ! -x "$venv/bin/python" ]]; then
+    _recap_msg -b "Creating Recap's private Python environment in:" "  ${venv/#$HOME/~}"
+    mkdir -p "$RECAP_HOME" && "$base" -m venv "$venv" 2>&1 | tail -3
+    if [[ ! -x "$venv/bin/python" ]]; then
+      _recap_msg "Could not create the environment." "Check that this Python includes the venv module, or try another one:" "  RECAP_BASE_PYTHON=/path/to/python3 recapsetup"
+      return 1
+    fi
+  else
+    _recap_msg -b "Updating Recap's private Python environment in:" "  ${venv/#$HOME/~}"
+  fi
+  _recap_msg "Installing trafilatura, youtube-transcript-api and pypdfium2." "This needs a network connection and takes about a minute."
+  "$venv/bin/python" -m pip install --quiet --upgrade pip >/dev/null 2>&1
+  if ! out=$("$venv/bin/python" -m pip install --quiet --upgrade trafilatura youtube-transcript-api pypdfium2 2>&1); then
+    _recap_msg "The package install failed. The last lines of pip's output:" "$(print -r -- "$out" | tail -8)"
+    return 1
+  fi
+  if ! out=$("$venv/bin/python" -c 'import trafilatura, youtube_transcript_api, pypdfium2' 2>&1); then
+    _recap_msg "The packages installed but could not be loaded:" "$(print -r -- "$out" | tail -4)"
+    return 1
+  fi
+  _recap_msg "Done. recapurl and recapurls now use this environment automatically." "To check everything, run:" "  recapdoctor"
+}
+
+# recapdoctor: check the whole setup and say what to fix. Safe to paste into a bug report.
+recapdoctor() {
+  local problems=0 pyproblems=0 py list m pyout line
+  local default_model="${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}"
+  _recap_has_model() {   # is this model in `ollama list`? A name without a tag also matches :latest
+    local want="$1"
+    [[ "$want" == *:* ]] || want="${want}:latest"
+    print -r -- "$list" | awk 'NR>1 {print $1}' | grep -qx -- "$want"
+  }
+  print ""
+  print "Recap check"
+  print ""
+  print "System"
+  if [[ "$(uname -s)" == Darwin ]]; then
+    print "  ok       macOS $(sw_vers -productVersion 2>/dev/null) on $(uname -m), zsh $ZSH_VERSION"
+  else
+    print "  PROBLEM  this is not macOS ($(uname -s)). Recap uses pbcopy and pbpaste and supports macOS only."; problems=$((problems+1))
+  fi
+  if command -v pbcopy >/dev/null 2>&1 && command -v pbpaste >/dev/null 2>&1; then
+    print "  ok       pbcopy and pbpaste found"
+  else
+    print "  PROBLEM  pbcopy or pbpaste not found"; problems=$((problems+1))
+  fi
+  print ""
+  print "Ollama"
+  if ! command -v ollama >/dev/null 2>&1; then
+    print "  PROBLEM  ollama not found. Install it from https://ollama.com, then rerun recapdoctor."; problems=$((problems+1))
+  else
+    print "  ok       ollama found: ${$(command -v ollama)/#$HOME/~}"
+    if list=$(ollama list 2>/dev/null); then
+      print "  ok       Ollama is running"
+      if _recap_has_model "$default_model"; then
+        print "  ok       model $default_model is installed (the default)"
+      else
+        print "  PROBLEM  model $default_model is not installed. Build it with the ollama create commands in the README."; problems=$((problems+1))
+      fi
+      for m in gemma-sum llama3.2:3b; do
+        if _recap_has_model "$m"; then print "  ok       optional model $m is installed"
+        else print "  optional model $m is not installed ($( [[ $m == gemma-sum ]] && print 'second opinion' || print 'needed by recapmail' ))"; fi
+      done
+    else
+      print "  PROBLEM  Ollama is installed but not running. Open the Ollama app, or run: ollama serve"; problems=$((problems+1))
+    fi
+  fi
+  unfunction _recap_has_model 2>/dev/null
+  print ""
+  print "Python (only for recapurl and recapurls)"
+  py="$(_recap_py)"
+  if [[ -n "$RECAP_PYTHON" ]]; then print "  using    RECAP_PYTHON: ${RECAP_PYTHON/#$HOME/~}"
+  elif [[ -x "$RECAP_HOME/venv/bin/python" ]]; then print "  using    the private environment: ${RECAP_HOME/#$HOME/~}/venv"
+  else print "  using    python3 from your PATH (no private environment yet; recapsetup creates one)"; fi
+  if ! pyout=$("$py" - 2>&1 <<'PY'
+import sys
+from importlib.metadata import PackageNotFoundError, version
+print("python", sys.version.split()[0])
+for dist in ("trafilatura", "youtube-transcript-api", "pypdfium2", "pypdf"):
+    try:
+        print("ok", dist, version(dist))
+    except PackageNotFoundError:
+        print("missing", dist)
+PY
+  ); then
+    print "  PROBLEM  could not run Python (${py/#$HOME/~}). Run recapsetup."; problems=$((problems+1)); pyproblems=$((pyproblems+1))
+  else
+    print "  ok       Python $(print -r -- "$pyout" | sed -n 's/^python //p' | head -1)"
+    for line in ${(f)"$(print -r -- "$pyout" | grep -E '^(ok|missing) ')"}; do
+      m="${${line#* }%% *}"
+      case "$line" in
+        "ok "*) print "  ok       $m ${line##* }" ;;
+        *) if [[ "$m" == pypdf ]]; then print "  optional pypdf is not installed (only a fallback PDF reader)"
+           elif [[ "$m" == pypdfium2 && "$pyout" == *"ok pypdf "* ]]; then print "  optional pypdfium2 is not installed (pypdf will be used, with poorer PDF text)"
+           else print "  PROBLEM  $m is not installed. Run recapsetup."; problems=$((problems+1)); pyproblems=$((pyproblems+1)); fi ;;
+      esac
+    done
+  fi
+  print ""
+  print "Files"
+  if mkdir -p "$RECAP_DIR" 2>/dev/null && touch "$RECAP_DIR/.recap-write-test" 2>/dev/null; then
+    rm -f "$RECAP_DIR/.recap-write-test"
+    print "  ok       summaries folder ${RECAP_DIR/#$HOME/~} is writable"
+  else
+    print "  PROBLEM  cannot write to ${RECAP_DIR/#$HOME/~}"; problems=$((problems+1))
+  fi
+  print ""
+  if (( problems == 0 )); then print "Result: all checks passed."
+  else
+    print "Result: $problems problem(s) found."
+    (( pyproblems )) && print "Python problems affect only recapurl and recapurls; the clipboard commands do not need Python."
+  fi
+  print ""
+  (( problems == 0 ))
 }
 
 # --- email ----------------------------------------------------------

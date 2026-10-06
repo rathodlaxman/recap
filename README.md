@@ -9,7 +9,7 @@ Everything is summarised on the machine through [Ollama](https://ollama.com), so
 - **A Mac.** The commands use `pbcopy` and `pbpaste` and run in `zsh`, so this is macOS only. Linux and Windows are not supported.
 - **Tested on one machine:** a MacBook Air M1 with 8 GB of RAM. Other Macs, Intel Macs and other macOS versions have not been tested.
 - **[Ollama](https://ollama.com)**, which runs the language models on your Mac. See its site for its own system requirements. The default model is about 4.6 GB.
-- **A recent Python 3**, only for `recapurl` and `recapurls` (web pages, YouTube, PDFs). The clipboard commands do not need it.
+- **Python 3.9 or newer**, only for `recapurl` and `recapurls` (web pages, YouTube, PDFs). The clipboard commands do not need it. `recapsetup` installs what they need in a private environment, so your own Python is left alone.
 
 ## What stays on your Mac
 
@@ -18,7 +18,7 @@ Everything is summarised on the machine through [Ollama](https://ollama.com), so
 | Summarise copied text (`recap`, `recaplong`, `recapall`, `recapmail`) | Nothing. The model runs locally |
 | Summarise a PDF file already on your Mac | Nothing |
 | `recapurl` or `recapurls` with a web address, YouTube link or PDF address | Your Mac downloads the page, captions or PDF directly from that site, which sees the request and your IP address. The text is then summarised locally |
-| First-time setup | Downloads of Ollama, the models and the Python packages |
+| First-time setup | Downloads of Ollama, the models and (with `recapsetup`) the Python packages |
 
 Recap itself sends nothing anywhere except the downloads you ask for. It does not control what Ollama or the Python packages do; see their own documentation.
 
@@ -43,6 +43,8 @@ Summaries come from a small local model and can be wrong. In testing, no invente
 | `recapurl "ADDRESS"` | Fetches a web article, the captions of a YouTube video, or a PDF (an address or a file on the Mac), and summarises it |
 | `recapurl "A" "B"` | Several addresses or PDF files in one run. `--single` saves one combined file, `--separate` one file each |
 | `recapurls` | Summarises every web address on the clipboard, one per line (same flags) |
+| `recapsetup` | Creates or updates the private Python environment that `recapurl` and `recapurls` use |
+| `recapdoctor` | Checks the whole setup and says what to fix. Safe to paste into a bug report |
 | `recap help` | Lists the options |
 
 Every summary is written as Markdown to `~/Summaries/YYYY-MM-DD-title.md` and printed on screen.
@@ -84,15 +86,23 @@ printf 'FROM gemma3:4b\nPARAMETER num_ctx 12288\nPARAMETER temperature 0.2\n' > 
 ollama create gemma-sum -f ~/Modelfile.sum
 ```
 
-`recapurl` and `recapurls` need three Python packages:
+`recapurl` and `recapurls` need three Python packages (`trafilatura`, `youtube-transcript-api`, `pypdfium2`). One command installs them:
 
 ```sh
-python3 -m pip install trafilatura youtube-transcript-api pypdfium2
+recapsetup
 ```
 
-`pypdfium2` reads PDFs. If it is missing but `pypdf` is installed, `recapurl` falls back to `pypdf` and says so. `pypdf` can garble page headers and small capitals.
+It creates a private Python environment in `~/.recap/venv` and installs the packages there. This takes about a minute and needs a network connection. It never touches your own Python, so it also works when `pip` refuses to install into a Python managed by Homebrew (the `externally-managed-environment` error). Run it again any time to upgrade the packages, for example if YouTube captions stop working.
 
-**Known limitation:** Recap uses whichever `python3` is first on your path and does not yet support a private Python environment. If `pip` stops with `externally-managed-environment` (common with Python installed by Homebrew), the address commands will not work until that is added. The clipboard commands are not affected.
+Then check everything:
+
+```sh
+recapdoctor
+```
+
+`recapdoctor` reports on macOS, Ollama, the models, the Python packages and the output folder, and says what to fix. If something does not work, paste its output into your bug report.
+
+Recap picks its Python in this order: `RECAP_PYTHON` if you set it, then the private environment, then `python3` from your path. The last option keeps older setups working. If you use your own environment, install the three packages in it yourself. `pypdf` is an optional fallback PDF reader: if `pypdfium2` is missing but `pypdf` is installed, `recapurl` falls back to it and says so, but `pypdf` can garble page headers and small capitals.
 
 ## Web pages, YouTube and PDFs
 
@@ -151,6 +161,9 @@ Settings that can be put before a command, or exported in `~/.zshrc`:
 | `RECAP_URL_MAX` | 10000 | Most words `recapurl` accepts |
 | `RECAP_PDF_MAX_MB` | 30 | Largest PDF `recapurl` downloads or opens |
 | `RECAP_PDF_READER` | (pypdfium2) | `pypdf` forces the fallback reader, for troubleshooting |
+| `RECAP_HOME` | `~/.recap` | Where `recapsetup` puts the private Python environment |
+| `RECAP_PYTHON` | (none) | A Python to use instead of the private environment |
+| `RECAP_BASE_PYTHON` | `python3` | The Python `recapsetup` uses to create the environment |
 | `RECAP_URL_FORCE` | off | `1` skips the paywall, short-text and length checks |
 
 ## Length limits
@@ -199,7 +212,7 @@ The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model n
 ## Third-party software and terms
 
 - **Models.** Each model has its own licence and terms, shown on its page in the Ollama library. By pulling a model you accept them. Recap does not include or redistribute any model.
-- **Python packages.** `trafilatura`, `youtube-transcript-api`, `pypdfium2` (and the optional `pypdf`) are installed from PyPI under their own licences.
+- **Python packages.** `trafilatura`, `youtube-transcript-api` and `pypdfium2` (and the optional `pypdf`) are installed from PyPI by `recapsetup` under their own licences.
 - **YouTube.** Captions are read with an unofficial library that uses YouTube's undocumented access. It can stop working at any time and YouTube may restrict it. Use it at your own discretion.
 - **Web content.** You are responsible for having the right to read and summarise what you fetch. Recap does not bypass paywalls: when a page marks itself members-only it stops, and `RECAP_URL_FORCE=1` only skips the checks, so it summarises whatever text the site returned.
 
