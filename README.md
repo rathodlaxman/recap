@@ -24,86 +24,33 @@ The summarising happens on your Mac through [Ollama](https://ollama.com), so no 
    ```sh
    recapdoctor
    ```
-7. **Summarise something** (see the examples below):
+7. **Summarise a short sample.** The Recap folder has a `samples` folder with short texts. This tells Recap to read one of them (`<` means "read from this file"; it needs no internet):
    ```sh
-   recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)"
+   recap < samples/sample-article.txt
    ```
 
 Keep the Recap folder where it is. If you move it, repeat step 4 and delete the old `source` line from `~/.zshrc`.
 
 ## Examples
 
-Copy a command from a grey box and paste it into Terminal. The web examples use Wikipedia pages anyone can open. **Type or copy the straight quote marks (`"`).** If you copy from Word, Notes or WhatsApp, the quotes can turn curly (`“ ”`) and the command fails.
+Start with the samples, which need no internet and finish quickly. Then try a web page. Copy a command from a grey box and paste it into Terminal. **Type or copy the straight quote marks (`"`).** If you copy from Word, Notes or WhatsApp, the quotes can turn curly (`“ ”`) and the command fails.
 
-Wikipedia pages vary a lot in length. If a page is longer than 10,000 words, Recap stops and says so; pick a shorter page, or see "Length limits".
+**How long things take.** On the tested Mac (an M1 with 8 GB of memory), allow 30 to 90 seconds for a text of about 1,000 words. Longer texts are read in parts and take minutes: the Wikipedia article "AI agent" (about 7,300 words) is read in seven parts, which Recap estimates at about five minutes, and "Generative artificial intelligence" (about 13,000 words) is refused as too long. The examples below are short on purpose.
 
-**A web page**
+### Text from a file, or text you copy (works offline)
 
-```sh
-recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)"
-```
-
-**A short version** (one sentence and up to three takeaways):
+Give Recap a file with `<`, or copy text yourself (select it, press Command + C) and run the command with nothing after it. Run these from the Recap folder:
 
 ```sh
-recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)" short
+recap < samples/sample-article.txt
 ```
 
-**With your own focus:**
+Variations on the same file:
 
 ```sh
-recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)" "focus on how it is celebrated"
-```
-
-**Several pages one after another:**
-
-```sh
-recapurl "https://en.wikipedia.org/wiki/AI_agent" "https://en.wikipedia.org/wiki/Generative_artificial_intelligence"
-```
-
-`recapurls` does the same, and you can type the addresses after it too:
-
-```sh
-recapurls "https://en.wikipedia.org/wiki/AI_agent" "https://en.wikipedia.org/wiki/Generative_artificial_intelligence"
-```
-
-**Several pages saved as one file** (`--single`), or one file each (`--separate`):
-
-```sh
-recapurls --single "https://en.wikipedia.org/wiki/AI_agent" "https://en.wikipedia.org/wiki/Generative_artificial_intelligence"
-```
-
-**A list of addresses from the clipboard.** Copy lines like these (one address per line, from a note or an email), then run `recapurls` with nothing after it:
-
-```
-https://en.wikipedia.org/wiki/Republic_Day_(India)
-https://en.wikipedia.org/wiki/AI_agent
-```
-
-```sh
-recapurls
-```
-
-**A YouTube video** (it reads the captions). Replace `VIDEOID` with the code from the video's address. Pick a video that shows the CC (captions) button:
-
-```sh
-recapurl "https://www.youtube.com/watch?v=VIDEOID"
-```
-
-**A PDF**, from an address or from a file on your Mac. In Terminal, type `recapurl ` and drag the PDF file into the window to fill in its path:
-
-```sh
-recapurl "https://example.com/report.pdf"
-recapurl ~/Downloads/report.pdf
-```
-
-**Text you copy yourself.** Open any article, select the text (Command+A), copy it (Command+C), then run one of these in Terminal:
-
-```sh
-recap
-recap short
-recap "focus on the costs"
-recapc
+recap short < samples/sample-article.txt
+recap "focus on the costs" < samples/sample-article.txt
+recapc < samples/sample-article.txt
 ```
 
 - `recap`: the standard summary (gist, main points, and "Worth noting" if there is more).
@@ -111,9 +58,99 @@ recapc
 - `recap "focus on the costs"`: a summary that pays special attention to what you name.
 - `recapc`: the same as `recap`, and the summary is also copied to the clipboard so you can paste it.
 
-For a long article or a transcript (over about 4,000 words), use `recaplong`. It reads the text in parts and is more accurate. For a circular or rule change, use `recap changes`: it says which clauses are new and which already existed. For an email, copy it and run `recapmail`. To summarise several articles in one go, put a line containing only `@@@@` between them, copy everything, and run `recapall`.
+**A circular or rule change.** `recap changes` says which clauses are new and which already existed:
 
-**Check your setup or version at any time:**
+```sh
+recap changes < samples/sample-circular.txt
+```
+
+**An email:**
+
+```sh
+recapmail < samples/sample-email.txt
+```
+
+**Several articles in one go.** Put a line containing only `@@@@` between the articles and run `recapall`:
+
+```sh
+recapall < samples/sample-batch.txt
+```
+
+**A long article or transcript** (over about 4,000 words): give it to `recaplong` (`recaplong < file.txt`, or copy it first). It reads the text in parts, is more accurate, and takes several minutes.
+
+Every command that takes text accepts a file (`< file.txt`) or text piped in (`cat file.txt | recap`). With nothing given, it reads the clipboard.
+
+### Web pages (needs internet)
+
+These two pages are short (each under 2,000 words): "Ideas That Changed My Life" by Morgan Housel, and Jeff Bezos's 2010 Princeton speech on James Clear's site.
+
+```sh
+recapurl "https://collabfund.com/blog/ideas-that-changed-my-life/"
+```
+
+A short version, and a version with your own focus:
+
+```sh
+recapurl "https://collabfund.com/blog/ideas-that-changed-my-life/" short
+recapurl "https://collabfund.com/blog/ideas-that-changed-my-life/" "focus on competitive advantage"
+```
+
+Both pages one after another (`recapurls` does the same with the same addresses):
+
+```sh
+recapurl "https://collabfund.com/blog/ideas-that-changed-my-life/" "https://jamesclear.com/great-speeches/what-matters-more-than-your-talents-by-jeff-bezos"
+```
+
+```sh
+recapurls "https://collabfund.com/blog/ideas-that-changed-my-life/" "https://jamesclear.com/great-speeches/what-matters-more-than-your-talents-by-jeff-bezos"
+```
+
+Saved as one combined file (`--single`) or one file each (`--separate`):
+
+```sh
+recapurls --single "https://collabfund.com/blog/ideas-that-changed-my-life/" "https://jamesclear.com/great-speeches/what-matters-more-than-your-talents-by-jeff-bezos"
+```
+
+**A list of addresses from the clipboard.** Copy lines like these (one address per line, from a note or an email), then run `recapurls` with nothing after it:
+
+```
+https://collabfund.com/blog/ideas-that-changed-my-life/
+https://jamesclear.com/great-speeches/what-matters-more-than-your-talents-by-jeff-bezos
+```
+
+```sh
+recapurls
+```
+
+### A PDF
+
+From an address, or from a file on your Mac. This paper is five pages, roughly 2,500 words:
+
+```sh
+recapurl "https://www.nakedcapitalism.com/wp-content/uploads/2015/08/How-Complex-Systems-Fail.pdf"
+```
+
+Some sites refuse automatic downloads (Recap then says `HTTP 403`). In that case download the PDF in your browser and use the file form below.
+
+For a file you already have, type `recapurl ` and drag the PDF into the Terminal window to fill in its path:
+
+```sh
+recapurl ~/Downloads/report.pdf
+```
+
+A whole book is refused as too long. Copy one chapter's text and use `recaplong` instead.
+
+### A YouTube video
+
+Recap reads the captions, so pick a video that shows the CC button. Spoken words run at roughly 150 a minute, so a 10-minute video is about 1,500 words and gives a quick result. Recap stops above 10,000 words, which is about an hour of speech. Replace `VIDEOID` with the code from the video's address:
+
+```sh
+recapurl "https://www.youtube.com/watch?v=VIDEOID"
+```
+
+The first messages show how many words of captions were found, so you can press Control + C straight away if a video is longer than you want to wait for.
+
+### Check your setup or version at any time
 
 ```sh
 recapdoctor
@@ -162,7 +199,7 @@ To report a security problem privately, see `SECURITY.md`.
 
 | Command | What it does |
 | --- | --- |
-| `recap` | Adaptive summary of whatever is on the clipboard: gist, main points, and "Worth noting" only if there is more |
+| `recap` | Adaptive summary of the text on the clipboard, or of a file you give it (`recap < file.txt`): gist, main points, and "Worth noting" only if there is more |
 | `recap short` | One sentence plus up to three takeaways |
 | `recap changes` | For circulars and rule changes: which clauses are new, which are unchanged, who acts and from when |
 | `recap "focus on costs"` | Summary with a focus you choose |
@@ -366,6 +403,7 @@ The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model n
 - `MANUAL.pdf` — printable reference
 - `README.md` — this file
 - `GETTING-STARTED.md` — a step-by-step guide for people new to Terminal
+- `samples/` — short fictional texts for trying the copied-text commands
 - `LICENSE` — the MIT licence
 - `CHANGELOG.md` — what changed in each version
 - `CONTRIBUTING.md` — how to report a problem or send a change

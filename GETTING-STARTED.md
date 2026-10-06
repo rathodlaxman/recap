@@ -92,17 +92,33 @@ You should see lines starting with **ok** and the result **all checks passed**. 
 
 ## Step 8. Your first summary
 
-This summarises a Wikipedia page:
+The Recap folder contains a **samples** folder with short texts, so your first result comes quickly and needs no internet. This tells Recap to read a sample news story and summarise it. You are still in the Recap folder from Step 4, so type:
 
 ```
-recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)"
+recap < samples/sample-article.txt
+```
+
+The `<` means "read from this file". You will see a few messages, and then the summary, usually within a minute. The summary is also saved: open **Finder**, choose **Go**, then **Home**, and look in the **Summaries** folder.
+
+Now try a shorter version of the same text:
+
+```
+recap short < samples/sample-article.txt
+```
+
+## Step 9. A web page
+
+This summarises a short article from the internet (about 1,100 words, so allow about a minute):
+
+```
+recapurl "https://collabfund.com/blog/ideas-that-changed-my-life/"
 ```
 
 Type the quote marks as plain straight marks (`"`). If you copy a command from Word, Notes or WhatsApp, the quote marks can turn curly and the command will not work.
 
-You will see messages while Recap fetches the page and reads it. The summary appears after a while, which can be a few minutes on a slower Mac. It is also saved: open **Finder**, choose **Go**, then **Home**, and look in the **Summaries** folder.
+Very long pages take many minutes, and pages over 10,000 words are refused with a message. Wikipedia articles are often long, so they are not good first tries.
 
-## Step 9. Summarise text you copy
+## Step 10. Text you copy yourself
 
 1. Open any article and select all the text (**Command + A**).
 2. Copy it (**Command + C**).
@@ -112,24 +128,34 @@ You will see messages while Recap fetches the page and reads it. The summary app
 recap
 ```
 
+If your text is in a file instead, give Recap the file: `recap < myfile.txt`.
+
 ## Everyday cheat sheet
 
 | What you want | What to type |
 | --- | --- |
 | Summarise the text you copied | `recap` |
+| Summarise a text file | `recap < myfile.txt` |
 | A shorter summary | `recap short` |
 | A summary about one thing | `recap "focus on the costs"` |
 | Summarise a very long text | `recaplong` |
+| A circular or rule change | `recap changes` |
+| An email | `recapmail` |
+| Several articles at once (a line with only `@@@@` between them) | `recapall` |
 | Summarise a web page | `recapurl "https://..."` |
-| Summarise several pages | `recapurl "https://..." "https://..."` |
+| Summarise several pages | `recapurl "https://..." "https://..."` or `recapurls "https://..." "https://..."` |
+| Summarise a list of addresses you copied (one per line) | `recapurls` |
 | Summarise a YouTube video | `recapurl "https://www.youtube.com/watch?v=..."` |
-| Summarise a PDF file | `recapurl ` and then drag the file into Terminal |
+| Summarise a PDF address | `recapurl "https://.../file.pdf"` |
+| Summarise a PDF file on your Mac | `recapurl ` and then drag the file into Terminal |
 | Check that everything works | `recapdoctor` |
+| See which version you have | `recap version` |
 
 ## If something goes wrong
 
 | What you see | What to do |
 | --- | --- |
+| "Only 1 words found" (or another very small number) | Recap found almost nothing to read: the copy did not work. Copy the text again (Command + C), or skip the clipboard and give Recap the file: `recap < myfile.txt`. |
 | `command not found: recap` | Recap is not switched on in this window. Type `source ~/.zshrc`. If that does not help, repeat Steps 4 and 5. |
 | `no matches found` or strange errors with an address | The quote marks are missing or curly. Put the address in plain straight quotes `"`. |
 | "Ollama is installed but not running" | Open the Ollama app (Step 1), wait a few seconds, and try again. |

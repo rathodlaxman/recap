@@ -76,8 +76,15 @@ _recap_dedupe() {   # RECAP_OVERLAP = share of repeated words that counts as a r
 }
 
 # --- input and source helpers (used by recapurl) -------------------
-_recap_input() {   # RECAP_INPUT = read this file instead of the clipboard
-  if [[ -n "$RECAP_INPUT" ]]; then cat "$RECAP_INPUT"; else pbpaste; fi
+_recap_input() {   # the text to work on: RECAP_INPUT (a file), else a file or pipe given to the command, else the clipboard
+  local t
+  if [[ -n "$RECAP_INPUT" ]]; then cat "$RECAP_INPUT"
+  elif [[ ! -t 0 ]]; then   # recap < file.txt, or: cat file.txt | recap
+    t=$(mktemp); cat > "$t"
+    if [[ -s "$t" ]]; then cat "$t"; else pbpaste; fi
+    rm -f "$t"
+  else pbpaste
+  fi
 }
 
 _recap_src_line() {   # RECAP_SOURCE = address to show under the heading
@@ -122,7 +129,7 @@ recap() {
     version|-V|--version) print -r -- "Recap $RECAP_VERSION"; return ;;
     help|-h|--help)
       cat <<'EOT'
-  recap               adaptive summary of whatever is on the clipboard
+  recap               adaptive summary of the text on the clipboard (or: recap < file.txt)
   recap short         one sentence plus up to 3 takeaways
   recap changes       for circulars and rules: new vs unchanged clauses
   recap "focus text"  your own focus, e.g. recap "focus on costs"
@@ -150,7 +157,7 @@ EOT
   title=$(_recap_title "$tmp")
 
   if (( words < 20 )); then
-    _recap_msg -b "Only $words words on the clipboard. Copy the article first."
+    _recap_msg -b "Only $words words found." "Copy the article first (Command + C), or give a file: recap < file.txt"
     rm -f "$tmp"; return 1
   fi
 
@@ -194,7 +201,8 @@ _recap_save() {
   _recap_msg "Saved:" "  $file"
 }
 
-alias recapc='recap | tee >(pbcopy)'
+unalias recapc 2>/dev/null   # older versions defined recapc as an alias, which blocks the function below
+recapc() { recap "$@" | tee >(pbcopy); }   # same as recap, and the summary is also copied to the clipboard
 
 # --- read one long text in parts, then combine (used by recaplong and recapall) ---
 _recap_long_core() {   # $1 = text file, $2 = title, rest = optional focus; summary goes to stdout
@@ -242,7 +250,7 @@ recapall() {
   local -a parts
   tmp=$(mktemp -d); out=$(mktemp)
 
-  pbpaste | tr -d '\r' | awk -v d="$tmp" '
+  _recap_input | tr -d '\r' | awk -v d="$tmp" '
     BEGIN{n=1}
     /^@@@@[[:space:]]*$/ {n++; next}
     {print > sprintf("%s/part_%03d.txt", d, n)}'
@@ -250,7 +258,7 @@ recapall() {
   parts=("$tmp"/part_*.txt(N))
   n=${#parts}
   if (( n == 0 )); then
-    _recap_msg -b "Nothing found on the clipboard."; rm -rf "$tmp" "$out"; return 1
+    _recap_msg -b "Nothing found to read." "Copy the articles first, or give a file: recapall < file.txt"; rm -rf "$tmp" "$out"; return 1
   fi
   (( n == 1 )) && _recap_msg -b "Only one article found." "Put @@@@ alone on a line between articles."
 
@@ -299,7 +307,7 @@ recaplong() {
   title=$(_recap_title "$tmp")
 
   if (( words < 20 )); then
-    _recap_msg -b "Only $words words on the clipboard. Copy the text first."
+    _recap_msg -b "Only $words words found." "Copy the text first (Command + C), or give a file: recaplong < file.txt"
     rm -f "$tmp" "$out"; return 1
   fi
 
@@ -558,7 +566,15 @@ def title_candidates():
             continue                                  # a running label such as HBR CASE STUDY
         if 3 <= len(l) <= 120 and not l.endswith((".", ",", ";")):
             yield l
-title = next(title_candidates(), "")
+cands = []
+for c in title_candidates():
+    cands.append(c)
+    if len(cands) == 3:
+        break
+title = cands[0] if cands else ""
+# a running header that is only part of the next candidate (How Systems Fail / How Complex Systems Fail): take the longer one
+if len(cands) > 1 and key(cands[0]) in repeated and set(cands[0].lower().split()) < set(cands[1].lower().split()):
+    title = cands[1]
 
 # ---- drop page numbers, running headers, web addresses at the page edge, legal lines
 kept = []
@@ -982,7 +998,7 @@ recapurls() {
     recapurl "${flags[@]}" "$@"
     return $?
   fi
-  urls=(${(f)"$(pbpaste | tr -d '\r' | grep -Eo 'https?://[^[:space:]]+' | awk '{ u = $0; while (u != "") { c = substr(u, length(u), 1); if (c ~ /[.,;:>!?]/) { u = substr(u, 1, length(u) - 1) } else if (c == ")" && gsub(/\(/, "(", u) < gsub(/\)/, ")", u)) { u = substr(u, 1, length(u) - 1) } else break } if (u != "" && !seen[u]++) print u }')"})
+  urls=(${(f)"$(_recap_input | tr -d '\r' | grep -Eo 'https?://[^[:space:]]+' | awk '{ u = $0; while (u != "") { c = substr(u, length(u), 1); if (c ~ /[.,;:>!?]/) { u = substr(u, 1, length(u) - 1) } else if (c == ")" && gsub(/\(/, "(", u) < gsub(/\)/, ")", u)) { u = substr(u, 1, length(u) - 1) } else break } if (u != "" && !seen[u]++) print u }')"})
   if (( ${#urls} == 0 )); then
     _recap_msg -b "No web addresses found on the clipboard." "Copy the addresses first, one per line, each starting with http:// or https://."
     return 1
@@ -1169,6 +1185,6 @@ recapmail() {
   local model="${RECAP_MAIL_MODEL:-${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}}"
   local -a tf
   tf=(${=$(_recap_flags "$model")})
-  pbpaste | tr -d '\r' | ollama run --nowordwrap "${tf[@]}" "$model" \
+  _recap_input | tr -d '\r' | ollama run --nowordwrap "${tf[@]}" "$model" \
 "Summarise the email below in 3 lines. Then list: who sent it and what they want from me, any tasks or deadlines, and whether a reply is needed. If there are no tasks or deadlines, write None. Use only facts in the email. Do not ask me questions."
 }
