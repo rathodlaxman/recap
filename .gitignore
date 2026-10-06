@@ -1,2 +1,7 @@
 .DS_Store
 Summaries/
+*.bak
+*.swp
+*~
+*-source.txt
+*-notes.txt
