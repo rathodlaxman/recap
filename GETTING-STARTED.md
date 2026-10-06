@@ -11,6 +11,8 @@ This guide is for people who have never used Terminal. Follow the steps in order
 - About 10 GB of free disk space, to be safe. The model alone is about 4.6 GB.
 - Time. Most of the first-time wait is the model download, which depends on your internet speed. Keep the Mac awake and plugged in.
 
+**Already use Homebrew?** There is a shorter route: see "Install with Homebrew" in the README. This guide uses the plain download, which works for everyone.
+
 ## Step 1. Install Ollama
 
 Ollama is the program that runs the AI model on your Mac.

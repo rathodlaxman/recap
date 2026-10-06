@@ -2,6 +2,12 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Install with Homebrew: `brew install rathodlaxman/tap/recap` (the formula lives in the separate `homebrew-tap` repository). The README and MANUAL explain it, including Homebrew's tap trust, upgrading and removing.
+
 ## [1.0.0] - 2026-10-06
 
 First public release.

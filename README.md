@@ -31,6 +31,8 @@ The summarising happens on your Mac through [Ollama](https://ollama.com), so no 
 
 Keep the Recap folder where it is. If you move it, repeat step 4 and delete the old `source` line from `~/.zshrc`.
 
+**Use Homebrew?** Replace steps 2 to 4 with the commands in "Install with Homebrew" below.
+
 ## Examples
 
 Start with the samples, which need no internet and finish quickly. Then try a web page. Copy a command from a grey box and paste it into Terminal. **Type or copy the straight quote marks (`"`).** If you copy from Word, Notes or WhatsApp, the quotes can turn curly (`“ ”`) and the command fails.
@@ -281,6 +283,40 @@ ollama create gemma-sum -f ~/Modelfile.sum
 Then use `RECAP_MODEL=gemma-sum recap`.
 
 **Which Python runs the address commands:** `RECAP_PYTHON` if you set it, then the private environment, then `python3` from your path. The last option keeps older setups working. If you use your own environment, install the three packages in it yourself. `pypdf` is an optional fallback PDF reader: if `pypdfium2` is missing but `pypdf` is installed, `recapurl` falls back to it and says so, but `pypdf` can garble page headers and small capitals.
+
+## Install with Homebrew
+
+If you use [Homebrew](https://brew.sh), one command installs Recap instead of the ZIP download:
+
+```sh
+brew install rathodlaxman/tap/recap
+```
+
+Use the **full name** exactly as written. Since Homebrew 6.0.0, code from third-party taps is not run until you trust it, and installing by the full name trusts only Recap's formula. If you add the tap first with `brew tap rathodlaxman/tap` and want to install by the short name, run `brew trust --formula rathodlaxman/tap/recap` first. See [Homebrew's Tap Trust page](https://docs.brew.sh/Tap-Trust).
+
+Homebrew installs the files but does not change your `~/.zshrc`. Switch Recap on, run the one-time setup, and check it:
+
+```sh
+echo "source $(brew --prefix)/opt/recap/share/recap/recap.zsh" >> ~/.zshrc
+source ~/.zshrc
+recapsetup
+recapdoctor
+```
+
+Try it on a sample:
+
+```sh
+recap < "$(brew --prefix)/opt/recap/share/recap/samples/sample-article.txt"
+```
+
+The samples are in `$(brew --prefix)/opt/recap/share/recap/samples/` and the documentation, including the guide for beginners, is in `$(brew --prefix)/opt/recap/share/doc/recap/`.
+
+- **Upgrade:** `brew update`, then `brew upgrade recap`.
+- **Remove:** `brew uninstall recap` and `brew untap rathodlaxman/tap`, then delete the `source` line from `~/.zshrc`. Your summaries and the private Python environment in `~/.recap` are not removed.
+- **Use one copy only.** If you have both a ZIP download and a Homebrew install, keep only one `source` line in `~/.zshrc`, or two copies will load.
+- Homebrew does not install Ollama. Install it yourself (see "Before you start"); `recapsetup` then does the rest, exactly as in the ZIP route.
+
+The formula lives in a separate repository, [rathodlaxman/homebrew-tap](https://github.com/rathodlaxman/homebrew-tap).
 
 ## Web pages, YouTube and PDFs
 
