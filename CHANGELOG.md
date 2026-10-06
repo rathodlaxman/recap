@@ -8,12 +8,12 @@ First public release.
 
 ### Added
 
-- Summaries of copied text: `recap` (with `short`, `changes` and your own focus), `recaplong` for long texts, `recapall` for several articles at once, `recapc` to copy the result, and `recapmail` for emails.
+- Summaries of copied text: `recap` (with `short`, `changes` and your own focus), `recaplong` for long texts, `recapall` for several articles at once, `recapc` to copy the result, and `recapmail` for emails. One model, `gemma4-sum`, does every job; `RECAP_MAIL_MODEL` can give `recapmail` a different one.
 - `recapurl` and `recapurls`: summarise a web article, a YouTube video's captions, or a PDF (an address or a file on the Mac), one or several at a time, with `--single` or `--separate` output.
 - Checks that stop instead of summarising a paywall notice, an error page, a scanned PDF, or text over 10,000 words.
-- `recapsetup`, which installs the Python packages in a private environment, and `recapdoctor`, which checks the whole setup.
+- `recapsetup`, a one-time setup that installs the Python packages in a private environment and downloads and builds the summarising model, and `recapdoctor`, which checks the whole setup. `recap version` shows the version.
 - Summaries are saved as Markdown in `~/Summaries`, with the source text kept beside them for address runs.
-- A README and a printable MANUAL.
+- A README with a quick start and an example for every feature, a step-by-step `GETTING-STARTED.md` for people new to Terminal, and a printable MANUAL.
 
 ### Known limitations
 

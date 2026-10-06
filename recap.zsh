@@ -132,8 +132,8 @@ recap() {
   recapmail           short email summary: sender, tasks, deadlines, reply needed
   recapurl "ADDRESS"  fetch a web article or YouTube captions, or read a PDF (address or file), and summarise (quote it)
   recapurl "A" "B"    several addresses, one after another (--single: one file, --separate: one each)
-  recapurls           summarise every web address on the clipboard (one per line; same flags)
-  recapsetup          create or update the private Python environment the address commands use
+  recapurls           summarise the addresses typed after it, or every address on the clipboard (one per line)
+  recapsetup          one-time setup: private Python environment and the summarising model
   recapdoctor         check the whole setup and say what to fix
   recap version       show which version of Recap this is
   RECAP_MODEL=gemma-sum recap    use a different model for one run
@@ -973,12 +973,16 @@ recapurl() {
   (( ${#failed} == 0 ))
 }
 
-# recapurls [--single | --separate] ["focus text"]: summarise every web address found on the clipboard
-# (one per line, anything else is ignored)
+# recapurls [--single | --separate] ["ADDRESS" ...] ["focus text"]: summarise the addresses typed after it, or, with none,
+# every web address found on the clipboard (one per line, anything else is ignored)
 recapurls() {
   local -a urls flags
   while [[ "$1" == --single || "$1" == --separate ]]; do flags+=("$1"); shift; done
-  urls=(${(f)"$(pbpaste | tr -d '\r' | grep -Eo 'https?://[^[:space:]]+' | sed -E 's/[.,;:)>]+$//' | awk '!seen[$0]++')"})
+  if [[ -n "$1" ]] && _recap_is_addr "$1"; then   # addresses typed after the command: same as recapurl
+    recapurl "${flags[@]}" "$@"
+    return $?
+  fi
+  urls=(${(f)"$(pbpaste | tr -d '\r' | grep -Eo 'https?://[^[:space:]]+' | awk '{ u = $0; while (u != "") { c = substr(u, length(u), 1); if (c ~ /[.,;:>!?]/) { u = substr(u, 1, length(u) - 1) } else if (c == ")" && gsub(/\(/, "(", u) < gsub(/\)/, ")", u)) { u = substr(u, 1, length(u) - 1) } else break } if (u != "" && !seen[u]++) print u }')"})
   if (( ${#urls} == 0 )); then
     _recap_msg -b "No web addresses found on the clipboard." "Copy the addresses first, one per line, each starting with http:// or https://."
     return 1
@@ -987,18 +991,31 @@ recapurls() {
   recapurl "${flags[@]}" "${urls[@]}" "$@"
 }
 
-# --- Python environment: setup and health check ----------------------
-# recapsetup: create (or update) Recap's private Python environment in $RECAP_HOME/venv and install the
-# packages the address commands need. Your own Python is not touched. Run it again to upgrade the packages.
+# --- Python environment and model: setup and health check ------------
+_recap_model_installed() {   # $1 = model name, $2 = the output of `ollama list`. A name without a tag also matches :latest
+  local want="$1"
+  [[ "$want" == *:* ]] || want="${want}:latest"
+  print -r -- "$2" | awk 'NR>1 {print $1}' | grep -qx -- "$want"
+}
+
+# recapsetup: one command to get everything ready. It creates (or updates) Recap's private Python environment in
+# $RECAP_HOME/venv for the address commands, and builds the summarising model in Ollama if it is missing.
+# Your own Python is not touched. Run it again to upgrade the packages. recapsetup --no-model skips the model.
 recapsetup() {
-  local base="${RECAP_BASE_PYTHON:-python3}" venv="$RECAP_HOME/venv" out ver
+  local base="${RECAP_BASE_PYTHON:-python3}" venv="$RECAP_HOME/venv" out ver list modelfile
+  local no_model=0 todo=""
+  [[ "$1" == --no-model ]] && no_model=1
   if ! command -v "$base" >/dev/null 2>&1; then
     _recap_msg -b "Python 3 was not found ($base)." "Install it from python.org or with Homebrew (brew install python), then run recapsetup again."
     return 1
   fi
+  ver=$("$base" -c 'import sys; print(sys.version.split()[0])' 2>/dev/null)
+  if [[ -z "$ver" ]]; then
+    _recap_msg -b "Python 3 could not be run." "If macOS opened a window offering to install the command line developer tools, click Install, wait until it finishes, then run recapsetup again." "Otherwise install Python 3.9 or newer from python.org."
+    return 1
+  fi
   if ! "$base" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' 2>/dev/null; then
-    ver=$("$base" -c 'import sys; print(sys.version.split()[0])' 2>/dev/null)
-    _recap_msg -b "Python ${ver:-?} is too old: Recap needs Python 3.9 or newer." "Install a newer Python, then run:" "  RECAP_BASE_PYTHON=/path/to/python3 recapsetup"
+    _recap_msg -b "Python $ver is too old: Recap needs Python 3.9 or newer." "Install a newer Python, then run:" "  RECAP_BASE_PYTHON=/path/to/python3 recapsetup"
     return 1
   fi
   if [[ ! -x "$venv/bin/python" ]]; then
@@ -1021,18 +1038,47 @@ recapsetup() {
     _recap_msg "The packages installed but could not be loaded:" "$(print -r -- "$out" | tail -4)"
     return 1
   fi
-  _recap_msg "Done. recapurl and recapurls now use this environment automatically." "To check everything, run:" "  recapdoctor"
+  _recap_msg "The Python packages are ready."
+
+  # the summarising model (one model does every job)
+  if (( no_model )); then
+    :
+  elif ! command -v ollama >/dev/null 2>&1; then
+    _recap_msg "Ollama is not installed, so the summarising model was not set up." "Install it from https://ollama.com (download it and open the app), then run recapsetup again."
+    todo="install Ollama, then run recapsetup again"
+  elif ! list=$(ollama list 2>/dev/null); then
+    _recap_msg "Ollama is installed but not running, so the summarising model was not set up." "Open the Ollama app (or run: ollama serve), wait a few seconds, then run recapsetup again."
+    todo="start Ollama, then run recapsetup again"
+  elif _recap_model_installed "$RECAP_MODEL_DEFAULT" "$list"; then
+    _recap_msg "The summarising model ($RECAP_MODEL_DEFAULT) is already set up."
+  else
+    _recap_msg "Setting up the summarising model." "This downloads about 4.6 GB, once. Keep the Mac awake and connected to the internet." "Press Control+C to cancel; running recapsetup again resumes."
+    if ! ollama pull gemma4:e2b; then
+      _recap_msg "The model download failed." "Check your internet connection, then run recapsetup again."
+      return 1
+    fi
+    modelfile=$(mktemp)
+    printf 'FROM gemma4:e2b\nPARAMETER num_ctx 12288\nPARAMETER temperature 0.2\n' > "$modelfile"
+    if ! ollama create "$RECAP_MODEL_DEFAULT" -f "$modelfile" >/dev/null 2>&1; then
+      rm -f "$modelfile"
+      _recap_msg "The model was downloaded but could not be set up." "Run recapdoctor and send its output with a bug report."
+      return 1
+    fi
+    rm -f "$modelfile"
+    _recap_msg "The summarising model ($RECAP_MODEL_DEFAULT) is ready."
+  fi
+
+  if [[ -n "$todo" ]]; then
+    _recap_msg "Almost done. Still to do: $todo."
+  else
+    _recap_msg "Setup is complete." "To check everything, run:" "  recapdoctor"
+  fi
 }
 
 # recapdoctor: check the whole setup and say what to fix. Safe to paste into a bug report.
 recapdoctor() {
   local problems=0 pyproblems=0 py list m pyout line
   local default_model="${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}"
-  _recap_has_model() {   # is this model in `ollama list`? A name without a tag also matches :latest
-    local want="$1"
-    [[ "$want" == *:* ]] || want="${want}:latest"
-    print -r -- "$list" | awk 'NR>1 {print $1}' | grep -qx -- "$want"
-  }
   print ""
   print "Recap check (version $RECAP_VERSION)"
   print ""
@@ -1055,20 +1101,21 @@ recapdoctor() {
     print "  ok       ollama found: ${$(command -v ollama)/#$HOME/~}"
     if list=$(ollama list 2>/dev/null); then
       print "  ok       Ollama is running"
-      if _recap_has_model "$default_model"; then
+      if _recap_model_installed "$default_model" "$list"; then
         print "  ok       model $default_model is installed (the default)"
       else
         print "  PROBLEM  model $default_model is not installed. Build it with the ollama create commands in the README."; problems=$((problems+1))
       fi
-      for m in gemma-sum llama3.2:3b; do
-        if _recap_has_model "$m"; then print "  ok       optional model $m is installed"
-        else print "  optional model $m is not installed ($( [[ $m == gemma-sum ]] && print 'second opinion' || print 'needed by recapmail' ))"; fi
-      done
+      if _recap_model_installed gemma-sum "$list"; then print "  ok       optional model gemma-sum is installed (second opinion)"
+      else print "  optional model gemma-sum is not installed (only needed for a second opinion)"; fi
+      if [[ -n "$RECAP_MAIL_MODEL" && "$RECAP_MAIL_MODEL" != "$default_model" ]]; then
+        if _recap_model_installed "$RECAP_MAIL_MODEL" "$list"; then print "  ok       recapmail model $RECAP_MAIL_MODEL is installed"
+        else print "  PROBLEM  recapmail model $RECAP_MAIL_MODEL (RECAP_MAIL_MODEL) is not installed"; problems=$((problems+1)); fi
+      fi
     else
       print "  PROBLEM  Ollama is installed but not running. Open the Ollama app, or run: ollama serve"; problems=$((problems+1))
     fi
   fi
-  unfunction _recap_has_model 2>/dev/null
   print ""
   print "Python (only for recapurl and recapurls)"
   py="$(_recap_py)"
@@ -1119,6 +1166,9 @@ PY
 
 # --- email ----------------------------------------------------------
 recapmail() {
-  pbpaste | tr -d '\r' | ollama run --nowordwrap llama3.2:3b \
+  local model="${RECAP_MAIL_MODEL:-${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}}"
+  local -a tf
+  tf=(${=$(_recap_flags "$model")})
+  pbpaste | tr -d '\r' | ollama run --nowordwrap "${tf[@]}" "$model" \
 "Summarise the email below in 3 lines. Then list: who sent it and what they want from me, any tasks or deadlines, and whether a reply is needed. If there are no tasks or deadlines, write None. Use only facts in the email. Do not ask me questions."
 }

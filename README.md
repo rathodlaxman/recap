@@ -1,14 +1,132 @@
 # Recap
 
-A local article summariser for macOS. Copy an article (or give a web address, a YouTube link or a PDF), type one word, read the gist.
+**Recap is a free, open-source command-line tool for macOS that summarises articles, web pages, YouTube videos and PDFs on your own Mac, using a local AI model.** You type one short command in Terminal and read the gist. It is not an app with windows and buttons: you run it from Terminal.
 
-Everything is summarised on the machine through [Ollama](https://ollama.com), so no article text is sent to any AI service. The clipboard commands (`recap`, `recaplong`, `recapall`, `recapmail`) work without a network connection. The address commands (`recapurl`, `recapurls`) need one to fetch a web page, a YouTube video's captions or a PDF at an address. A PDF file already on the Mac is read offline. Built and tuned on a MacBook Air M1 with 8 GB of RAM.
+**New to Terminal? Start with [GETTING-STARTED.md](GETTING-STARTED.md).** It walks through every step in plain language.
+
+The summarising happens on your Mac through [Ollama](https://ollama.com), so no article text is sent to any AI service. The clipboard commands (`recap`, `recaplong`, `recapall`, `recapmail`) work without a network connection. The address commands (`recapurl`, `recapurls`) need one to fetch a web page, a YouTube video's captions or a PDF at an address. A PDF file already on the Mac is read offline. Built and tuned on a MacBook Air M1 with 8 GB of RAM.
+
+## Quick start
+
+1. **Install [Ollama](https://ollama.com)** (download it, open it once).
+2. **Download Recap:** on the repository page click the green **Code** button, then **Download ZIP**, and unzip it.
+3. **Open Terminal** and go to the Recap folder: type `cd ` (with a space after it), drag the unzipped folder into the Terminal window, and press Enter.
+4. **Switch Recap on** (this adds one line to your `~/.zshrc`; do it once):
+   ```sh
+   echo "source $PWD/recap.zsh" >> ~/.zshrc
+   source ~/.zshrc
+   ```
+5. **Run the one-time setup.** It installs what the address commands need and downloads the summarising model (about 4.6 GB, once):
+   ```sh
+   recapsetup
+   ```
+6. **Check that everything is fine:**
+   ```sh
+   recapdoctor
+   ```
+7. **Summarise something** (see the examples below):
+   ```sh
+   recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)"
+   ```
+
+Keep the Recap folder where it is. If you move it, repeat step 4 and delete the old `source` line from `~/.zshrc`.
+
+## Examples
+
+Copy a command from a grey box and paste it into Terminal. The web examples use Wikipedia pages anyone can open. **Type or copy the straight quote marks (`"`).** If you copy from Word, Notes or WhatsApp, the quotes can turn curly (`“ ”`) and the command fails.
+
+Wikipedia pages vary a lot in length. If a page is longer than 10,000 words, Recap stops and says so; pick a shorter page, or see "Length limits".
+
+**A web page**
+
+```sh
+recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)"
+```
+
+**A short version** (one sentence and up to three takeaways):
+
+```sh
+recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)" short
+```
+
+**With your own focus:**
+
+```sh
+recapurl "https://en.wikipedia.org/wiki/Republic_Day_(India)" "focus on how it is celebrated"
+```
+
+**Several pages one after another:**
+
+```sh
+recapurl "https://en.wikipedia.org/wiki/AI_agent" "https://en.wikipedia.org/wiki/Generative_artificial_intelligence"
+```
+
+`recapurls` does the same, and you can type the addresses after it too:
+
+```sh
+recapurls "https://en.wikipedia.org/wiki/AI_agent" "https://en.wikipedia.org/wiki/Generative_artificial_intelligence"
+```
+
+**Several pages saved as one file** (`--single`), or one file each (`--separate`):
+
+```sh
+recapurls --single "https://en.wikipedia.org/wiki/AI_agent" "https://en.wikipedia.org/wiki/Generative_artificial_intelligence"
+```
+
+**A list of addresses from the clipboard.** Copy lines like these (one address per line, from a note or an email), then run `recapurls` with nothing after it:
+
+```
+https://en.wikipedia.org/wiki/Republic_Day_(India)
+https://en.wikipedia.org/wiki/AI_agent
+```
+
+```sh
+recapurls
+```
+
+**A YouTube video** (it reads the captions). Replace `VIDEOID` with the code from the video's address. Pick a video that shows the CC (captions) button:
+
+```sh
+recapurl "https://www.youtube.com/watch?v=VIDEOID"
+```
+
+**A PDF**, from an address or from a file on your Mac. In Terminal, type `recapurl ` and drag the PDF file into the window to fill in its path:
+
+```sh
+recapurl "https://example.com/report.pdf"
+recapurl ~/Downloads/report.pdf
+```
+
+**Text you copy yourself.** Open any article, select the text (Command+A), copy it (Command+C), then run one of these in Terminal:
+
+```sh
+recap
+recap short
+recap "focus on the costs"
+recapc
+```
+
+- `recap`: the standard summary (gist, main points, and "Worth noting" if there is more).
+- `recap short`: one sentence and up to three takeaways.
+- `recap "focus on the costs"`: a summary that pays special attention to what you name.
+- `recapc`: the same as `recap`, and the summary is also copied to the clipboard so you can paste it.
+
+For a long article or a transcript (over about 4,000 words), use `recaplong`. It reads the text in parts and is more accurate. For a circular or rule change, use `recap changes`: it says which clauses are new and which already existed. For an email, copy it and run `recapmail`. To summarise several articles in one go, put a line containing only `@@@@` between them, copy everything, and run `recapall`.
+
+**Check your setup or version at any time:**
+
+```sh
+recapdoctor
+recap version
+```
+
+Every summary is also saved as a Markdown file in the `Summaries` folder in your home folder.
 
 ## Before you start
 
 - **A Mac.** The commands use `pbcopy` and `pbpaste` and run in `zsh`, so this is macOS only. Linux and Windows are not supported.
 - **Tested on one machine:** a MacBook Air M1 with 8 GB of RAM. Other Macs, Intel Macs and other macOS versions have not been tested.
-- **[Ollama](https://ollama.com)**, which runs the language models on your Mac. See its site for its own system requirements. The default model is about 4.6 GB.
+- **[Ollama](https://ollama.com)**, which runs the language model on your Mac. See its site for its own system requirements. The model is about 4.6 GB and is downloaded once by `recapsetup`.
 - **Python 3.9 or newer**, only for `recapurl` and `recapurls` (web pages, YouTube, PDFs). The clipboard commands do not need it. `recapsetup` installs what they need in a private environment, so your own Python is left alone.
 
 ## What stays on your Mac
@@ -18,7 +136,7 @@ Everything is summarised on the machine through [Ollama](https://ollama.com), so
 | Summarise copied text (`recap`, `recaplong`, `recapall`, `recapmail`) | Nothing. The model runs locally |
 | Summarise a PDF file already on your Mac | Nothing |
 | `recapurl` or `recapurls` with a web address, YouTube link or PDF address | Your Mac downloads the page, captions or PDF directly from that site, which sees the request and your IP address. The text is then summarised locally |
-| First-time setup | Downloads of Ollama, the models and (with `recapsetup`) the Python packages |
+| First-time setup | Downloads of Ollama, the model (about 4.6 GB) and the Python packages, all done by `recapsetup` |
 
 Recap itself sends nothing anywhere except the downloads you ask for. It does not control what Ollama or the Python packages do; see their own documentation.
 
@@ -51,11 +169,11 @@ To report a security problem privately, see `SECURITY.md`.
 | `recaplong` | Long articles and transcripts: reads the text in parts, then combines. Slower but far more accurate |
 | `recapall` | Several articles in one run, separated by lines containing only `@@@@`. An article over 4,000 words is read in parts automatically |
 | `recapc` | Same as `recap`, and also copies the summary to the clipboard |
-| `recapmail` | Short email summary: sender, tasks, deadlines, whether a reply is needed |
+| `recapmail` | Short email summary: sender, tasks, deadlines, whether a reply is needed. Uses the same model as everything else |
 | `recapurl "ADDRESS"` | Fetches a web article, the captions of a YouTube video, or a PDF (an address or a file on the Mac), and summarises it |
 | `recapurl "A" "B"` | Several addresses or PDF files in one run. `--single` saves one combined file, `--separate` one file each |
-| `recapurls` | Summarises every web address on the clipboard, one per line (same flags) |
-| `recapsetup` | Creates or updates the private Python environment that `recapurl` and `recapurls` use |
+| `recapurls` | Summarises the addresses typed after it, or every web address on the clipboard (one per line). Same flags as `recapurl` |
+| `recapsetup` | One-time setup: the private Python environment and the summarising model |
 | `recapdoctor` | Checks the whole setup and says what to fix. Safe to paste into a bug report |
 | `recap help` | Lists the options |
 | `recap version` | Shows which version of Recap this is |
@@ -64,16 +182,50 @@ Every summary is written as Markdown to `~/Summaries/YYYY-MM-DD-title.md` and pr
 
 ## Setup
 
-Get the code, and install [Ollama](https://ollama.com) if you do not have it:
+The quick start above is all most people need. This section explains it in more detail.
+
+**1. Get Ollama.** Install [Ollama](https://ollama.com) and open it once. It runs the language model on your Mac.
+
+**2. Get the code.** Download the ZIP from the repository page, or use git:
 
 ```sh
 git clone https://github.com/rathodlaxman/recap.git
 cd recap
 ```
 
-Or use the green Code button on the repository page and choose Download ZIP, then unzip it and open Terminal in that folder.
+**3. Switch Recap on.** In the Recap folder, add one `source` line to your `~/.zshrc`:
 
-Then build the model:
+```sh
+echo "source $PWD/recap.zsh" >> ~/.zshrc
+source ~/.zshrc
+```
+
+Use a `source` line and not a pasted copy: with two copies of a function, the old one can keep running.
+
+**4. Run the setup.** One command does the rest:
+
+```sh
+recapsetup
+```
+
+It does two things:
+
+- **The Python packages.** `recapurl` and `recapurls` need three (`trafilatura`, `youtube-transcript-api`, `pypdfium2`). `recapsetup` creates a private Python environment in `~/.recap/venv` and installs them there. This takes about a minute and needs a network connection. It never touches your own Python, so it also works when `pip` refuses to install into a Python managed by Homebrew (the `externally-managed-environment` error).
+- **The summarising model.** It downloads `gemma4:e2b` (about 4.6 GB, once) and builds the model `gemma4-sum` from it, with the settings Recap needs. If Ollama is not installed or not running, it says so; install or open it and run `recapsetup` again.
+
+**One model does every job.** `gemma4-sum` is used for `recap`, `recaplong`, `recapall`, `recapurl`, `recapurls` and `recapmail`. You do not need any other model. `recapsetup --no-model` skips the model step if you want to set it up yourself.
+
+Run `recapsetup` again any time to upgrade the Python packages, for example if YouTube captions stop working.
+
+**5. Check everything:**
+
+```sh
+recapdoctor
+```
+
+`recapdoctor` reports on macOS, Ollama, the model, the Python packages and the output folder, and says what to fix. If something does not work, paste its output into your bug report.
+
+**Setting up the model by hand** (optional; `recapsetup` does exactly this):
 
 ```sh
 ollama pull gemma4:e2b
@@ -81,19 +233,7 @@ printf 'FROM gemma4:e2b\nPARAMETER num_ctx 12288\nPARAMETER temperature 0.2\n' >
 ollama create gemma4-sum -f ~/Modelfile.g4
 ```
 
-Load the functions from `~/.zshrc` with one `source` line (run this in the repository folder):
-
-```sh
-echo "source $PWD/recap.zsh" >> ~/.zshrc
-source ~/.zshrc
-recap help
-```
-
-Use a `source` line and not a pasted copy: with two copies of a function, the old one can keep running.
-
-`recapmail` additionally needs `ollama pull llama3.2:3b`.
-
-Optional second-opinion model, used with `RECAP_MODEL=gemma-sum recap` (see "Known weaknesses"):
+**Optional: a second opinion.** For an important document you can run it a second time with a different model and compare (see "Known weaknesses"). This is the only reason to install a second model:
 
 ```sh
 ollama pull gemma3:4b
@@ -101,23 +241,9 @@ printf 'FROM gemma3:4b\nPARAMETER num_ctx 12288\nPARAMETER temperature 0.2\n' > 
 ollama create gemma-sum -f ~/Modelfile.sum
 ```
 
-`recapurl` and `recapurls` need three Python packages (`trafilatura`, `youtube-transcript-api`, `pypdfium2`). One command installs them:
+Then use `RECAP_MODEL=gemma-sum recap`.
 
-```sh
-recapsetup
-```
-
-It creates a private Python environment in `~/.recap/venv` and installs the packages there. This takes about a minute and needs a network connection. It never touches your own Python, so it also works when `pip` refuses to install into a Python managed by Homebrew (the `externally-managed-environment` error). Run it again any time to upgrade the packages, for example if YouTube captions stop working.
-
-Then check everything:
-
-```sh
-recapdoctor
-```
-
-`recapdoctor` reports on macOS, Ollama, the models, the Python packages and the output folder, and says what to fix. If something does not work, paste its output into your bug report.
-
-Recap picks its Python in this order: `RECAP_PYTHON` if you set it, then the private environment, then `python3` from your path. The last option keeps older setups working. If you use your own environment, install the three packages in it yourself. `pypdf` is an optional fallback PDF reader: if `pypdfium2` is missing but `pypdf` is installed, `recapurl` falls back to it and says so, but `pypdf` can garble page headers and small capitals.
+**Which Python runs the address commands:** `RECAP_PYTHON` if you set it, then the private environment, then `python3` from your path. The last option keeps older setups working. If you use your own environment, install the three packages in it yourself. `pypdf` is an optional fallback PDF reader: if `pypdfium2` is missing but `pypdf` is installed, `recapurl` falls back to it and says so, but `pypdf` can garble page headers and small capitals.
 
 ## Web pages, YouTube and PDFs
 
@@ -167,6 +293,7 @@ Settings that can be put before a command, or exported in `~/.zshrc`:
 | Setting | Default | What it changes |
 | --- | --- | --- |
 | `RECAP_MODEL` | `gemma4-sum` | Model for one run |
+| `RECAP_MAIL_MODEL` | (the model above) | A different model for `recapmail` only |
 | `RECAP_DIR` | `~/Summaries` | Output folder |
 | `RECAP_CHUNK` | 1200 | Words per part when reading long text |
 | `RECAP_LONG_WORDS` | 4000 | Above this, `recapall` and `recapurl` read in parts |
@@ -226,7 +353,7 @@ The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model n
 
 ## Third-party software and terms
 
-- **Models.** Each model has its own licence and terms, shown on its page in the Ollama library. By pulling a model you accept them. Recap does not include or redistribute any model.
+- **Models.** Each model has its own licence and terms, shown on its page in the Ollama library. `recapsetup` downloads `gemma4:e2b`, and by downloading a model you accept its terms. Recap does not include or redistribute any model.
 - **Python packages.** `trafilatura`, `youtube-transcript-api` and `pypdfium2` (and the optional `pypdf`) are installed from PyPI by `recapsetup` under their own licences.
 - **YouTube.** Captions are read with an unofficial library that uses YouTube's undocumented access. It can stop working at any time and YouTube may restrict it. Use it at your own discretion.
 - **Web content.** You are responsible for having the right to read and summarise what you fetch. Recap does not bypass paywalls: when a page marks itself members-only it stops, and `RECAP_URL_FORCE=1` only skips the checks, so it summarises whatever text the site returned.
@@ -238,6 +365,7 @@ The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model n
 - `Modelfile.sum` — the optional second-opinion model
 - `MANUAL.pdf` — printable reference
 - `README.md` — this file
+- `GETTING-STARTED.md` — a step-by-step guide for people new to Terminal
 - `LICENSE` — the MIT licence
 - `CHANGELOG.md` — what changed in each version
 - `CONTRIBUTING.md` — how to report a problem or send a change
