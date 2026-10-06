@@ -4,6 +4,30 @@ A local article summariser for macOS. Copy an article (or give a web address, a 
 
 Everything is summarised on the machine through [Ollama](https://ollama.com), so no article text is sent to any AI service. The clipboard commands (`recap`, `recaplong`, `recapall`, `recapmail`) work without a network connection. The address commands (`recapurl`, `recapurls`) need one to fetch a web page, a YouTube video's captions or a PDF at an address. A PDF file already on the Mac is read offline. Built and tuned on a MacBook Air M1 with 8 GB of RAM.
 
+## Before you start
+
+- **A Mac.** The commands use `pbcopy` and `pbpaste` and run in `zsh`, so this is macOS only. Linux and Windows are not supported.
+- **Tested on one machine:** a MacBook Air M1 with 8 GB of RAM. Other Macs, Intel Macs and other macOS versions have not been tested.
+- **[Ollama](https://ollama.com)**, which runs the language models on your Mac. See its site for its own system requirements. The default model is about 4.6 GB.
+- **A recent Python 3**, only for `recapurl` and `recapurls` (web pages, YouTube, PDFs). The clipboard commands do not need it.
+
+## What stays on your Mac
+
+| What you do | What leaves your Mac |
+| --- | --- |
+| Summarise copied text (`recap`, `recaplong`, `recapall`, `recapmail`) | Nothing. The model runs locally |
+| Summarise a PDF file already on your Mac | Nothing |
+| `recapurl` or `recapurls` with a web address, YouTube link or PDF address | Your Mac downloads the page, captions or PDF directly from that site, which sees the request and your IP address. The text is then summarised locally |
+| First-time setup | Downloads of Ollama, the models and the Python packages |
+
+Recap itself sends nothing anywhere except the downloads you ask for. It does not control what Ollama or the Python packages do; see their own documentation.
+
+Everything Recap saves is plain, unencrypted text: summaries, source texts and notes in `~/Summaries`, and, for `recapc` and `recapall`, summaries on the clipboard, which other apps can read. For sensitive material, delete the files afterwards, point `RECAP_DIR` at a folder on an encrypted volume, and clear the clipboard.
+
+## Accuracy and limits
+
+Summaries come from a small local model and can be wrong. In testing, no invented facts were found in the summaries checked, but meaning errors did occur: dropped hedges, wrong attribution, swapped figures, and in one long text a reversed argument (see "Known weaknesses"). Treat a summary as a map of the article, never as the final word, and check the source before relying on it. Do not use a summary alone for a legal, medical or financial decision.
+
 ## What it does
 
 | Command | What it does |
@@ -25,7 +49,14 @@ Every summary is written as Markdown to `~/Summaries/YYYY-MM-DD-title.md` and pr
 
 ## Setup
 
-Install Ollama, then build the model:
+Get the code, and install [Ollama](https://ollama.com) if you do not have it:
+
+```sh
+git clone https://github.com/rathodlaxman/recap.git
+cd recap
+```
+
+Then build the model:
 
 ```sh
 ollama pull gemma4:e2b
@@ -45,6 +76,14 @@ Use a `source` line and not a pasted copy: with two copies of a function, the ol
 
 `recapmail` additionally needs `ollama pull llama3.2:3b`.
 
+Optional second-opinion model, used with `RECAP_MODEL=gemma-sum recap` (see "Known weaknesses"):
+
+```sh
+ollama pull gemma3:4b
+printf 'FROM gemma3:4b\nPARAMETER num_ctx 12288\nPARAMETER temperature 0.2\n' > ~/Modelfile.sum
+ollama create gemma-sum -f ~/Modelfile.sum
+```
+
 `recapurl` and `recapurls` need three Python packages:
 
 ```sh
@@ -52,6 +91,8 @@ python3 -m pip install trafilatura youtube-transcript-api pypdfium2
 ```
 
 `pypdfium2` reads PDFs. If it is missing but `pypdf` is installed, `recapurl` falls back to `pypdf` and says so. `pypdf` can garble page headers and small capitals.
+
+**Known limitation:** Recap uses whichever `python3` is first on your path and does not yet support a private Python environment. If `pip` stops with `externally-managed-environment` (common with Python installed by Homebrew), the address commands will not work until that is added. The clipboard commands are not affected.
 
 ## Web pages, YouTube and PDFs
 
@@ -155,13 +196,25 @@ ollama ps
 
 The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model no longer fits in memory and will be slow.
 
+## Third-party software and terms
+
+- **Models.** Each model has its own licence and terms, shown on its page in the Ollama library. By pulling a model you accept them. Recap does not include or redistribute any model.
+- **Python packages.** `trafilatura`, `youtube-transcript-api`, `pypdfium2` (and the optional `pypdf`) are installed from PyPI under their own licences.
+- **YouTube.** Captions are read with an unofficial library that uses YouTube's undocumented access. It can stop working at any time and YouTube may restrict it. Use it at your own discretion.
+- **Web content.** You are responsible for having the right to read and summarise what you fetch. Recap does not bypass paywalls: when a page marks itself members-only it stops, and `RECAP_URL_FORCE=1` only skips the checks, so it summarises whatever text the site returned.
+
 ## Repository contents
 
 - `recap.zsh` — the shell functions
-- `Modelfile.g4` — the model definition
+- `Modelfile.g4` — the default model definition
+- `Modelfile.sum` — the optional second-opinion model
 - `MANUAL.pdf` — printable reference
 - `README.md` — this file
+- `LICENSE` — the MIT licence
+- `.gitignore` — files git should skip
 
-## Licence
+## Licence and support
 
-MIT.
+MIT, see `LICENSE`. Provided as is, without warranty of any kind.
+
+It is maintained on a best-effort basis. Bug reports are welcome, but replies and fixes are not guaranteed.
