@@ -179,6 +179,7 @@ EOT
     _recap_msg "Note: over 2,500 words." "recaplong will be more accurate if this matters."
   fi
 
+  _recap_ensure_ollama || { rm -f "$tmp"; return 1; }
   local out
   out=$(mktemp)
   {
@@ -188,6 +189,11 @@ EOT
     ollama run --nowordwrap "${tf[@]}" "$model" "$base $extra" < "$tmp" | _recap_clean
   } | tee "$out"
 
+  if ! _recap_has_summary "$out"; then
+    _recap_msg "No summary was produced." "The model returned nothing, so nothing was saved. Run recapdoctor to check the setup, then try again."
+    _RECAP_FIRST_MSG="No summary was produced."
+    rm -f "$tmp" "$out"; return 1
+  fi
   _recap_save "$out" "$title"
   rm -f "$tmp" "$out"
 }
@@ -272,6 +278,7 @@ recapall() {
     _recap_msg -b "Nothing found to read." "Copy the articles first, or give a file: recapall < file.txt"; rm -rf "$tmp" "$out"; return 1
   fi
   (( n == 1 )) && _recap_msg -b "Only one article found." "Put @@@@ alone on a line between articles."
+  _recap_ensure_ollama || { rm -rf "$tmp"; rm -f "$out"; return 1; }
 
   for f in $parts; do
     words=$(wc -w < "$f" | tr -d ' ')
@@ -326,6 +333,7 @@ recaplong() {
     rm -f "$tmp" "$out"; return 1
   fi
 
+  _recap_ensure_ollama || { rm -f "$tmp" "$out"; return 1; }
   [[ -z "$RECAP_NO_LEAD" ]] && print -u2 ""
   local sumf; sumf=$(mktemp)
   _recap_long_core "$tmp" "$title" "$@" > "$sumf"
@@ -336,6 +344,11 @@ recaplong() {
     cat "$sumf"
   } | tee "$out"
 
+  if ! _recap_has_summary "$out"; then
+    _recap_msg "No summary was produced." "The model returned nothing, so nothing was saved. Run recapdoctor to check the setup, then try again."
+    _RECAP_FIRST_MSG="No summary was produced."
+    rm -f "$tmp" "$out" "$sumf"; return 1
+  fi
   _recap_save "$out" "$title"
   rm -f "$tmp" "$out" "$sumf"
 }
@@ -722,7 +735,7 @@ _recap_is_addr() {   # is this argument an address or a PDF file, rather than a 
 }
 
 _recap_url_one() {   # one address (web page or YouTube video) + optional mode or focus text; returns 1 if nothing was summarised
-  local url="$1" tmp info code words title slug srcfile http_status final cutoff=0 paywall=0 src_note is_yt=0 yt_lang yt_gen=0 yt_en=1 min_words=150 is_pdf=0 local_pdf=0 pdf_pages pg=""
+  local rc=0 url="$1" tmp info code words title slug srcfile http_status final cutoff=0 paywall=0 src_note is_yt=0 yt_lang yt_gen=0 yt_en=1 min_words=150 is_pdf=0 local_pdf=0 pdf_pages pg=""
   shift
   _RECAP_FIRST_MSG=""
   [[ "$url" == "~/"* ]] && url="$HOME/${url:2}"
@@ -914,12 +927,12 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
         _recap_msg "'$1' only applies under ${RECAP_LONG_WORDS:-4000} words." "Summarising in parts without it."
         shift ;;
     esac
-    RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recaplong "$@"
+    RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recaplong "$@" || rc=$?
   else
-    RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recap "$@"
+    RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recap "$@" || rc=$?
   fi
   rm -f "$tmp"
-  return 0
+  return $rc
 }
 
 # Which way to save a batch: flag, then RECAP_BATCH, then ask (only in a terminal), else separate files.
@@ -952,6 +965,7 @@ recapurl() {
     _recap_msg -b "Unknown option: $1" "Options: --single, --separate (only used with several addresses)."
     return 1
   fi
+  _recap_ensure_ollama || return 1
   urls=("$1"); shift
   while [[ -n "$1" ]] && _recap_is_addr "$1"; do urls+=("$1"); shift; done
 
@@ -1022,6 +1036,35 @@ recapurls() {
   recapurl "${flags[@]}" "${urls[@]}" "$@"
 }
 
+# --- Ollama: start it when it is not running ---------------------------
+_recap_ensure_ollama() {   # makes sure the Ollama server is running, and starts it if it is not
+  command -v ollama >/dev/null 2>&1 || {
+    _recap_msg -b "Ollama is not installed." "Install it from https://ollama.com (download it and open the app), then try again."
+    return 1
+  }
+  ollama list >/dev/null 2>&1 && return 0
+  local i
+  _recap_msg -b "Ollama is not running. Starting it now..." "This can take a few seconds."
+  if [[ -d /Applications/Ollama.app || -d "$HOME/Applications/Ollama.app" ]] && open -g -a Ollama >/dev/null 2>&1; then
+    :   # the Ollama app starts the server in the background
+  else
+    nohup ollama serve >/dev/null 2>&1 &!
+  fi
+  for ((i = 0; i < ${_RECAP_OLLAMA_WAIT:-30}; i++)); do
+    sleep 1
+    if ollama list >/dev/null 2>&1; then
+      _recap_msg "Ollama is running."
+      return 0
+    fi
+  done
+  _recap_msg "Ollama did not start in time." "Open the Ollama app (or run: ollama serve in another Terminal window), wait a few seconds, then try again."
+  return 1
+}
+
+_recap_has_summary() {   # does the saved text hold more than the heading and the Source line?
+  grep -v -E '^(## |Source:|[[:space:]]*$)' "$1" | grep -q .
+}
+
 # --- Python environment and model: setup and health check ------------
 _recap_model_installed() {   # $1 = model name, $2 = the output of `ollama list`. A name without a tag also matches :latest
   local want="$1"
@@ -1077,10 +1120,9 @@ recapsetup() {
   elif ! command -v ollama >/dev/null 2>&1; then
     _recap_msg "Ollama is not installed, so the summarising model was not set up." "Install it from https://ollama.com (download it and open the app), then run recapsetup again."
     todo="install Ollama, then run recapsetup again"
-  elif ! list=$(ollama list 2>/dev/null); then
-    _recap_msg "Ollama is installed but not running, so the summarising model was not set up." "Open the Ollama app (or run: ollama serve), wait a few seconds, then run recapsetup again."
+  elif ! _recap_ensure_ollama; then
     todo="start Ollama, then run recapsetup again"
-  elif _recap_model_installed "$RECAP_MODEL_DEFAULT" "$list"; then
+  elif list=$(ollama list 2>/dev/null) && _recap_model_installed "$RECAP_MODEL_DEFAULT" "$list"; then
     _recap_msg "The summarising model ($RECAP_MODEL_DEFAULT) is already set up."
   else
     _recap_msg "Setting up the summarising model." "This downloads about 4.6 GB, once. Keep the Mac awake and connected to the internet." "Press Control+C to cancel; running recapsetup again resumes."
@@ -1144,7 +1186,7 @@ recapdoctor() {
         else print "  PROBLEM  recapmail model $RECAP_MAIL_MODEL (RECAP_MAIL_MODEL) is not installed"; problems=$((problems+1)); fi
       fi
     else
-      print "  PROBLEM  Ollama is installed but not running. Open the Ollama app, or run: ollama serve"; problems=$((problems+1))
+      print "  PROBLEM  Ollama is installed but not running. Recap commands start it automatically; you can also open the Ollama app, or run: ollama serve"; problems=$((problems+1))
     fi
   fi
   print ""
@@ -1199,6 +1241,7 @@ PY
 recapmail() {
   local model="${RECAP_MAIL_MODEL:-${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}}"
   local -a tf
+  _recap_ensure_ollama || return 1
   tf=(${=$(_recap_flags "$model")})
   _recap_input | tr -d '\r' | ollama run --nowordwrap "${tf[@]}" "$model" \
 "Summarise the email below in 3 lines. Then list: who sent it and what they want from me, any tasks or deadlines, and whether a reply is needed. If there are no tasks or deadlines, write None. Use only facts in the email. Do not ask me questions."
