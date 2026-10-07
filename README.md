@@ -152,6 +152,45 @@ recapurl "https://www.youtube.com/watch?v=VIDEOID"
 
 The first messages show how many words of captions were found, so you can press Control + C straight away if a video is longer than you want to wait for.
 
+### Folders, duplicates and searching your summaries
+
+Give `recapurl` a folder, and it summarizes every PDF in it (not the folders inside it, and not other kinds of file), in name order. With more than 10 files in a terminal it asks first, because each one can take a minute or more:
+
+```sh
+recapurl ~/Desktop/Reports
+```
+
+Duplicates are skipped. The same page with tracking junk after the address, a trailing slash, `www.` or `http`, or the same YouTube video as `youtu.be/…`, counts as one:
+
+```sh
+recapurl "https://collabfund.com/blog/ideas-that-changed-my-life/" "https://www.collabfund.com/blog/ideas-that-changed-my-life?utm_source=newsletter"
+```
+
+An address you summarized before is not summarized again. Recap shows the saved summary instead and says when it was made. Add `--again` to summarize it afresh. This applies only to a plain summary: with `short` or a focus text you get a new one:
+
+```sh
+recapurl --again "https://collabfund.com/blog/ideas-that-changed-my-life/"
+```
+
+Search everything you have saved. Every word must appear, and the newest summaries come first:
+
+```sh
+recapfind interest rates
+recapfind --max 5 library
+recapfind --sources zebra
+```
+
+### A notification when a long run ends
+
+Notifications are off unless you ask for them. Add `--notify` to any of the summarizing commands (before or after the addresses). If the run takes longer than 20 seconds, macOS shows a notification with a sound, so you can do something else meanwhile. A batch gives one notification at the end, and a batch with failures uses a warning sound:
+
+```sh
+recapurl --notify "https://example.com/a" "https://example.com/b"
+recap --notify < long-report.txt
+```
+
+To have it every time, add `export RECAP_NOTIFY=1` to your `~/.zshrc`. The first time, macOS may ask whether to allow notifications.
+
 ### Check your setup or version at any time
 
 ```sh
@@ -173,7 +212,8 @@ Every summary is also saved as a Markdown file in the `Summaries` folder in your
 | What you do | What leaves your Mac |
 | --- | --- |
 | Summarize copied text (`recap`, `recaplong`, `recapall`, `recapmail`) | Nothing. The model runs locally |
-| Summarize a PDF file already on your Mac | Nothing |
+| Summarize a PDF file already on your Mac, or every PDF in a folder | Nothing |
+| `recapfind`, and the notification when a run ends | Nothing. Both use only your Mac |
 | `recapurl` or `recapurls` with a web address, YouTube link or PDF address | Your Mac downloads the page, captions or PDF directly from that site, which sees the request and your IP address. The text is then summarized locally |
 | First-time setup | Downloads of Ollama, the model (about 4.6 GB) and the Python packages, all done by `recapsetup` |
 
@@ -211,6 +251,8 @@ To report a security problem privately, see `SECURITY.md`.
 | `recapmail` | Short email summary: sender, tasks, deadlines, whether a reply is needed. Uses the same model as everything else |
 | `recapurl "ADDRESS"` | Fetches a web article, the captions of a YouTube video, or a PDF (an address or a file on the Mac), and summarizes it |
 | `recapurl "A" "B"` | Several addresses or PDF files in one run. `--single` saves one combined file, `--separate` one file each |
+| `recapurl FOLDER` | Summarizes every PDF in a folder (not its subfolders), in name order |
+| `recapfind "words"` | Searches your saved summaries. Every word must appear; capital letters do not matter |
 | `recapurls` | Summarizes the addresses typed after it, or every web address on the clipboard (one per line). Same flags as `recapurl` |
 | `recapsetup` | One-time setup: the private Python environment and the summarizing model |
 | `recapdoctor` | Checks the whole setup and says what to fix. Safe to paste into a bug report |
@@ -338,6 +380,9 @@ Put every address in double quotes. Addresses containing `?` or `&` break otherw
 - **Length limit.** Above 10,000 words `recapurl` stops (web page, YouTube transcript or PDF), saves the text, and suggests copying one chapter or section and using `recaplong`. The part-by-part method has been tested only up to about 6,600 words, and past roughly 10,000 words its combined notes probably no longer fit in the model's memory. `RECAP_URL_MAX=20000 recapurl "ADDRESS"` raises the limit for one run.
 - **YouTube.** The captions are read: English captions uploaded by the channel first, then YouTube's automatic English captions, then any language. The video title and channel are added at the top. The channel is the uploader, not necessarily the speaker. Channel and playlist pages, videos without captions, Vimeo, Spotify and audio or video files are refused with a message.
 - **PDFs.** Give a PDF address (one that serves a PDF is detected even without ".pdf" in its name) or the path of a PDF on the Mac. The text is cleaned before summarizing: the line breaks of each printed line are joined into paragraphs, words split by a hyphen at a line end are mended, and page numbers, headers and footers repeated on many pages, web addresses at the page edge and copyright lines are dropped. The title is the first short line of page 1 (the PDF's own title field is unreliable), or the file name if there is none. A PDF with no readable text (scanned pages), a password-protected one, a file that is not really a PDF, a damaged one and one over 30 MB are refused with a message.
+- **Author and site.** Under the heading, `Source:` shows the cleaned address (tracking parameters such as `utm_source` and `fbclid` and the `#` part are removed), and the next line shows `Author: … | Site: …`. For YouTube it shows `Channel: … | Site: youtube.com`. The author appears only when the page declares one; the site falls back to the address's host name. For a PDF, the author is read from an explicit line on page 1 ("by …", "Prepared by …" or "Author: …"), never from the PDF's own metadata, which is unreliable. A PDF on your Mac also shows `File: name.pdf`, and a PDF at an address shows its site. A first line that looks like a document code (such as "IIMA/ BP0370") is not used as the heading: the file name is.
+- **Duplicates and repeats.** Duplicate addresses in one command are skipped and listed. An address already summarized (found by reading the `Source:` lines of your saved summaries) is not summarized again: Recap shows the saved summary. `--again` redoes it, and `short`, `changes` or a focus text always run, because they ask for something different.
+- **Folders.** A folder stands for the PDF files directly inside it. With more than 10 and a terminal, Recap asks before starting.
 - **Files saved.** The summary gets a `Source:` line, marked `(PDF)`, `(YouTube captions, automatic)` or `(text appears cut off: possibly a paywalled teaser)` where that applies. The exact text the model read is saved next to it as `YYYY-MM-DD-title-source.txt`, so a summary can be checked against it. Long texts also save a `-notes.txt` file.
 - **It stops instead of summarizing** when the page marks its article as members-only, when fewer than 150 words come back (60 for YouTube and PDFs), when the site answers with an HTTP error (the status is shown), or when it redirects to a login page. `RECAP_URL_FORCE=1 recapurl "ADDRESS"` skips the paywall, short-text and length checks.
 - **Several addresses** run one after another. A failed address does not stop the rest, and the final list shows each failure with its reason. Extra addresses must start with `https://` or `www.`, or be a `.pdf` file. A mode or focus placed after the addresses applies to all of them.
@@ -382,6 +427,9 @@ Settings that can be put before a command, or exported in `~/.zshrc`:
 | `RECAP_PYTHON` | (none) | A Python to use instead of the private environment |
 | `RECAP_BASE_PYTHON` | `python3` | The Python `recapsetup` uses to create the environment |
 | `RECAP_URL_FORCE` | off | `1` skips the paywall, short-text and length checks |
+| `RECAP_NOTIFY` | off | `1` shows a macOS notification with a sound when a long run ends (the same as `--notify`) |
+| `RECAP_NOTIFY_AFTER` | 20 | Seconds a run must last before it notifies |
+| `RECAP_NOTIFY_SOUND` | `Glass` | Any macOS alert sound name, for example `Ping`. A run with failures always uses `Basso` |
 
 ## Length limits
 
@@ -405,11 +453,12 @@ No invented facts were found in the summaries checked, but five faults repeat. T
 - **Flattened names.** "A journalist" or "a report" in place of the named person or publication.
 - **Figures.** A number belonging to one scenario can migrate to another.
 
-Four more apply to the address commands and to `recap` itself:
+Five more apply to the address commands and to `recap` itself:
 
 - **Web extraction.** The text that comes back can be a paywall teaser, a notice or an advert, and the summary will describe it confidently. Read the "Text starts" lines and the saved `-source.txt` file. The stop messages catch the common cases, not all.
 - **YouTube automatic captions.** They have no speaker names, little punctuation and some misheard words, so attribution is the weakest point. Check names, figures and who said what against the video.
 - **PDF layout.** Two-column pages, tables and footnotes can come out jumbled or flattened, and the summary then describes the jumble. Scanned PDFs cannot be read. Read the saved `-source.txt` first when the layout is complicated.
+- **Author and site lines.** On a web page they come from tags the page itself declares, so the author can be missing or, rarely, wrong (a company name, for example). In a PDF they come from a "by …" line on page 1. They appear only when found, and a generic name such as "admin" or "The Editors" is dropped.
 - **Missing gist.** Sometimes the summary starts straight with bullets and has no gist sentence (seen on one `recapall` run of an article and on one `recap` run of a fictional case study, so the cause is the model, not the batch code). Running it again restored the gist in the one case that was repeated.
 
 Strongest on news, match reports, explainers, research write-ups and market pieces. Weakest on collections of quotes or anecdotes, where attribution slips most, and on regulatory texts.

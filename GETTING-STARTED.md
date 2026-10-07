@@ -71,7 +71,7 @@ Check that it worked:
 recap version
 ```
 
-You should see **Recap 1.0.1**.
+You should see **Recap 1.1.0**.
 
 ## Step 6. Run the one-time setup
 
@@ -152,6 +152,9 @@ If your text is in a file instead, give Recap the file: `recap < myfile.txt`.
 | Summarize a YouTube video | `recapurl "https://www.youtube.com/watch?v=..."` |
 | Summarize a PDF address | `recapurl "https://.../file.pdf"` |
 | Summarize a PDF file on your Mac | `recapurl ` and then drag the file into Terminal |
+| Summarize every PDF in a folder | `recapurl ` and then drag the folder into Terminal |
+| Find something in your saved summaries | `recapfind word` (more words narrow it down) |
+| Get a notification when a long run ends (off unless you ask) | add `--notify`, for example `recapurl --notify "https://..."`, or put `export RECAP_NOTIFY=1` in `~/.zshrc` to get it every time |
 | Check that everything works | `recapdoctor` |
 | See which version you have | `recap version` |
 
@@ -164,6 +167,8 @@ If your text is in a file instead, give Recap the file: `recap < myfile.txt`.
 | `no matches found` or strange errors with an address | The quote marks are missing or curly. Put the address in plain straight quotes `"`. |
 | "Ollama is not running. Starting it now..." | Normal, for example after a restart. Recap starts Ollama and carries on. Nothing to do. |
 | "Ollama did not start in time" | Open the Ollama app yourself (Step 1), wait a few seconds, and try again. |
+| "Already summarized on …" | Normal. You summarized that address before, so Recap shows the saved summary instead of starting again. To make a new one, add `--again`, for example `recapurl --again "https://..."`. |
+| "Skipped 1 duplicate address" | Normal. You gave the same page twice (perhaps with different tracking parts), so it is summarized once. |
 | "No summary was produced" | The model returned nothing, so nothing was saved. Run `recapdoctor`, then try again. |
 | The model download stopped or failed | Check your internet connection and run `recapsetup` again. |
 | "That is N words: too long" | Choose a shorter page, or copy part of the text and use `recaplong`. |

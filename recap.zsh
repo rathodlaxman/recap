@@ -2,12 +2,12 @@
 #  Recap - offline article summarizer  (Ollama + Gemma 4)
 #  Add this block to ~/.zshrc, then run:  source ~/.zshrc
 #  Commands:  recap | recap short | recap changes | recaplong
-#             recapall | recapc | recapmail | recapurl | recapurls | recapsetup | recapdoctor | recap help
+#             recapall | recapc | recapmail | recapurl | recapurls | recapfind | recapsetup | recapdoctor | recap help
 # ============================================================
 
 RECAP_DIR="${RECAP_DIR:-$HOME/Summaries}"
 RECAP_HOME="${RECAP_HOME:-$HOME/.recap}"
-RECAP_VERSION="1.0.1"
+RECAP_VERSION="1.1.0"
 RECAP_MODEL_DEFAULT="gemma4-sum"
 
 # --- which Python runs the address commands ---------------------------
@@ -87,11 +87,116 @@ _recap_input() {   # the text to work on: RECAP_INPUT (a file), else a file or p
   fi
 }
 
-_recap_src_line() {   # RECAP_SOURCE = address to show under the heading
+_recap_src_line() {   # RECAP_SOURCE = address to show under the heading; RECAP_BYLINE = author and site (or channel and site)
   if [[ -n "$RECAP_SOURCE" ]]; then
-    print -r -- "Source: $RECAP_SOURCE"
+    if [[ -n "$RECAP_BYLINE" ]]; then
+      print -r -- "Source: $RECAP_SOURCE  "   # two trailing spaces make a line break in Markdown
+      print -r -- "$RECAP_BYLINE"
+    else
+      print -r -- "Source: $RECAP_SOURCE"
+    fi
     print ""
   fi
+}
+
+_recap_notify() {   # $1 = SECONDS when the command started, $2 = message, $3 = subtitle, $4 = "issues" for the warning sound
+  # Off unless RECAP_NOTIFY=1 (or --notify). Only for runs longer than RECAP_NOTIFY_AFTER seconds (default 20).
+  [[ "${RECAP_NOTIFY:-0}" == 1 && -z "$RECAP_QUIET_DONE" ]] || return 0
+  (( SECONDS - $1 >= ${RECAP_NOTIFY_AFTER:-20} )) || return 0
+  local msg sub snd
+  msg=$(print -rn -- "$2" | tr -d '"\\' | tr '\n' ' ')
+  sub=$(print -rn -- "$3" | tr -d '"\\' | tr '\n' ' ' | cut -c1-100)
+  snd=$(print -rn -- "${RECAP_NOTIFY_SOUND:-Glass}" | tr -d '"\\')
+  [[ "$4" == issues ]] && snd="Basso"
+  if command -v osascript >/dev/null 2>&1; then
+    osascript -e "display notification \"$msg\" with title \"Recap\" subtitle \"$sub\" sound name \"$snd\"" >/dev/null 2>&1 && return 0
+  fi
+  print -n -u2 $'\a'
+}
+
+_recap_urltool() {   # keys ADDRESS...  ->  KEY<TAB>CLEAN per address.   seen DIR KEY...  ->  KEY<TAB>FILE<TAB>DATE for keys already summarized
+  "$(_recap_py)" - "$@" <<'PY'
+import datetime
+import glob
+import os
+import re
+import sys
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+TRACK = re.compile(
+    r"^(utm_.*|fbclid|gclid|dclid|gbraid|wbraid|msclkid|mc_cid|mc_eid|igshid|yclid|_hsenc|_hsmi|"
+    r"vero_id|ref_src|ref_url|s_cid|cmpid|ocid|mkt_tok|trk|trkid)$", re.I)
+YT_HOSTS = ("youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be")
+
+
+def norm(a):
+    """Return (key, clean). Two addresses with the same key are the same page."""
+    raw = a.strip()
+    a = raw
+    low = a.lower()
+    if low.startswith(("http://", "https://")) or low.startswith("www."):
+        if low.startswith("www."):
+            a = "https://" + a
+        try:
+            u = urlsplit(a)
+            host = (u.hostname or "").lower()
+            port = u.port
+        except ValueError:
+            return "raw:" + raw, raw
+        if not host or "@" in u.netloc:
+            return "raw:" + raw, raw
+        h = host[4:] if host.startswith("www.") else host
+        if h in YT_HOSTS:
+            vid = None
+            if h == "youtu.be":
+                vid = u.path.strip("/").split("/")[0] or None
+            elif u.path == "/watch":
+                vid = dict(parse_qsl(u.query)).get("v")
+            else:
+                m = re.match(r"^/(shorts|live|embed|v)/([^/?#]+)", u.path)
+                vid = m.group(2) if m else None
+            if vid and re.fullmatch(r"[A-Za-z0-9_-]{6,20}", vid):
+                return "yt:" + vid, "https://www.youtube.com/watch?v=" + vid
+        pairs = parse_qsl(u.query, keep_blank_values=True)
+        kept = [(k, v) for k, v in pairs if not TRACK.match(k)]
+        query = u.query if len(kept) == len(pairs) else urlencode(kept)
+        netloc = host + (":" + str(port) if port and port not in (80, 443) else "")
+        path = u.path or "/"
+        clean = urlunsplit((u.scheme.lower() or "https", netloc, path, query, ""))
+        key = "u:" + h + (":" + str(port) if port and port not in (80, 443) else "") + (path.rstrip("/") or "/")
+        if kept:
+            key += "?" + urlencode(sorted(kept))
+        return key, clean
+    p = os.path.expanduser(raw)
+    return "f:" + os.path.realpath(p), raw
+
+
+mode = sys.argv[1]
+if mode == "keys":
+    for a in sys.argv[2:]:
+        k, c = norm(a)
+        print(k + "\t" + c)
+elif mode == "seen":
+    folder, wanted, best = sys.argv[2], set(sys.argv[3:]), {}
+    suffix = re.compile(r" \((PDF|YouTube captions[^)]*|text appears cut off[^)]*)\)$")
+    for path in glob.glob(os.path.join(folder, "*.md")):
+        try:
+            if os.path.getsize(path) > 3000000:
+                continue
+            with open(path, encoding="utf-8", errors="replace") as f:
+                text = f.read()
+            mtime = os.path.getmtime(path)
+        except OSError:
+            continue
+        for line in text.splitlines():
+            if line.startswith("Source: "):
+                key = norm(suffix.sub("", line[8:].strip()))[0]
+                if key in wanted and (key not in best or mtime > best[key][0]):
+                    best[key] = (mtime, path)
+    for key, (mtime, path) in best.items():
+        d = datetime.datetime.fromtimestamp(mtime)
+        print(key + "\t" + path + "\t" + d.strftime("%b") + " " + str(d.day) + ", " + str(d.year))
+PY
 }
 
 _recap_msg() {   # screen messages: each argument on its own line, then a blank line (stderr only)
@@ -124,6 +229,8 @@ _recap_flags() {   # --think=false only for models that accept it
 
 # --- one article ---------------------------------------------------
 recap() {
+  [[ "$1" == --notify ]] && { local RECAP_NOTIFY=1; shift; }
+  local t0=$SECONDS
   local mode="$1" extra="" tmp title words model base first
   model="${RECAP_MODEL:-$RECAP_MODEL_DEFAULT}"
   local -a tf
@@ -146,7 +253,9 @@ recap() {
   recapmail           short email summary: sender, tasks, deadlines, reply needed
   recapurl "ADDRESS"  fetch a web article or YouTube captions, or read a PDF (address or file), and summarize (quote it)
   recapurl "A" "B"    several addresses, one after another (--single: one file, --separate: one each)
+  recapurl FOLDER     summarize every PDF in a folder; --again redoes one already summarized; --notify ends with a notification
   recapurls           summarize the addresses typed after it, or every address on the clipboard (one per line)
+  recapfind "words"    search your saved summaries (every word must appear)
   recapsetup          one-time setup: private Python environment and the summarizing model
   recapdoctor         check the whole setup and say what to fix
   recap version       show which version of Recap this is
@@ -195,6 +304,7 @@ EOT
     rm -f "$tmp" "$out"; return 1
   fi
   _recap_save "$out" "$title"
+  _recap_notify "$t0" "Summary ready" "$title"
   rm -f "$tmp" "$out"
 }
 
@@ -263,6 +373,8 @@ _recap_long_core() {   # $1 = text file, $2 = title, rest = optional focus; summ
 # --- several articles ----------------------------------------------
 # Articles over RECAP_LONG_WORDS (default 4000) are read in parts, like recaplong.
 recapall() {
+  [[ "$1" == --notify ]] && { local RECAP_NOTIFY=1; shift; }
+  local t0=$SECONDS
   local tmp out f i=0 n words title
   local -a parts
   tmp=$(mktemp -d); out=$(mktemp)
@@ -313,10 +425,13 @@ recapall() {
   _recap_save "$out" "batch-of-$i-articles"
   rm -rf "$tmp"; rm -f "$out"
   _recap_msg "Done. All summaries are also on your clipboard."
+  _recap_notify "$t0" "$i summaries ready" "recapall"
 }
 
 # --- long article or transcript (reads it in parts) -----------------
 recaplong() {
+  [[ "$1" == --notify ]] && { local RECAP_NOTIFY=1; shift; }
+  local t0=$SECONDS
   local tmp out title words first
   tmp=$(mktemp); out=$(mktemp)
 
@@ -350,6 +465,7 @@ recaplong() {
     rm -f "$tmp" "$out" "$sumf"; return 1
   fi
   _recap_save "$out" "$title"
+  _recap_notify "$t0" "Summary ready" "$title"
   rm -f "$tmp" "$out" "$sumf"
 }
 
@@ -447,6 +563,7 @@ with open(out, "w", encoding="utf-8") as f:
 print("lang=" + re.sub(r"\s*\(auto-generated\)", "", fetched.language or fetched.language_code, flags=re.I))
 print("generated=" + ("1" if fetched.is_generated else "0"))
 print("english=" + ("1" if english(chosen) else "0"))
+print("channel=" + re.sub(r"\s+", " ", channel).strip())
 PY
 }
 
@@ -603,6 +720,26 @@ title = cands[0] if cands else ""
 # a running header that is only part of the next candidate (How Systems Fail / How Complex Systems Fail): take the longer one
 if len(cands) > 1 and key(cands[0]) in repeated and set(cands[0].lower().split()) < set(cands[1].lower().split()):
     title = cands[1]
+# a document code such as "IIMA/ BP0370" or "Q3 2026" is not a heading: the file name is better
+if title and re.search(r"\d", title) and len(title.split()) <= 3 and not re.search(r"[a-z]{4,}", title):
+    title = ""
+
+# ---- author: only from an explicit line on page 1 ("by ...", "Prepared by ...", "Author: ..."); PDF metadata is not used
+AUTH = re.compile(r"^(?:prepared by|written by|authored by|authors?\s*:|by)\s+(.+)$", re.I)
+SPLIT = re.compile(r"[,;(]|\s+(?:at|of|from)\s+|(?<![A-Z])\.\s+(?=[A-Z])")
+NAMEWORD = {"and", "&", "van", "de", "der", "von", "la", "bin", "al", "del", "da", "di"}
+NOT_NAMES = {"the editors", "the editorial board", "the editorial team", "staff", "staff writer", "editors", "admin", "unknown", "anonymous"}
+author = ""
+for l in (page_lines[0][:25] if page_lines else []):
+    m = AUTH.match(l.strip())
+    if not m or len(l) > 160:
+        continue
+    cand = SPLIT.split(m.group(1))[0].strip(" .")
+    ws = cand.split()
+    if (1 <= len(ws) <= 8 and len(cand) <= 80 and not re.search(r"https?://|www\.|@|\d", cand)
+            and all(w[:1].isupper() or w.lower() in NAMEWORD for w in ws) and cand.lower() not in NOT_NAMES):
+        author = cand
+        break
 
 # ---- drop page numbers, running headers, web addresses at the page edge, legal lines
 kept = []
@@ -656,6 +793,7 @@ with open(out, "w", encoding="utf-8") as f:
     f.write("\n".join([title, ""] + body).strip() + "\n")
 print(f"pages={n}")
 print(f"reader={engine}")
+print("author=" + author)
 PY
 }
 
@@ -668,6 +806,7 @@ import re
 import sys
 import trafilatura
 from trafilatura import downloads
+from urllib.parse import urlsplit
 
 url, out = sys.argv[1], sys.argv[2]
 html, final = None, url
@@ -695,6 +834,7 @@ if not text:
 meta = trafilatura.extract_metadata(html)
 title = ((meta.title if meta else "") or "").strip()
 author = ((meta.author if meta else "") or "").strip()
+site = ((getattr(meta, "sitename", "") if meta else "") or "").strip()
 body = text.strip()
 if title and not body.lower().startswith(title.lower()):
     body = title + "\n\n" + body
@@ -703,6 +843,23 @@ if author and author.lower() not in body[:400].lower():
     body = first + "\n\nBy " + author + "\n" + rest
 with open(out, "w", encoding="utf-8") as f:
     f.write(body.strip() + "\n")
+
+
+def tidy_author(a):
+    a = re.sub(r"\s+", " ", (a or "").replace(";", ",").replace("|", "/")).strip(" ,;|-")
+    generic = {"admin", "administrator", "staff", "editor", "editors", "editorial", "team", "unknown",
+               "anonymous", "guest", "author", "user", "webmaster", "news desk", "newsroom", "staff writer"}
+    if not a or len(a) > 80 or a.lower() in generic or re.search(r"https?://|www\.|@|\d{3,}", a, re.I):
+        return ""
+    return a
+
+
+host = re.sub(r"^www\.", "", urlsplit(final).hostname or "")
+site = re.sub(r"\s+", " ", site.replace("|", "/"))
+if not site or len(site) > 60:
+    site = host
+print("author=" + tidy_author(author))
+print("site=" + site)
 
 if re.search(r'"isAccessibleForFree"\s*:\s*"?false"?', html, re.I):
     print("paywall=1")
@@ -726,11 +883,12 @@ _recap_has_pdf_reader() {   # pypdfium2 (cleaner text) or pypdf
   "$py" -c 'import pypdfium2' 2>/dev/null || "$py" -c 'import pypdf' 2>/dev/null
 }
 
-_recap_is_addr() {   # is this argument an address or a PDF file, rather than a mode or focus text?
+_recap_is_addr() {   # is this argument an address, a PDF file or a folder, rather than a mode or focus text?
   local a="$1"
   [[ "$a" == "~/"* ]] && a="$HOME/${a:2}"
   [[ "$a" == http://* || "$a" == https://* || "$a" == www.* ]] && return 0
   [[ "${a:l}" == *.pdf && ( -f "$a" || "$a" == /* || "$a" == ./* || "$a" == ../* ) ]] && return 0
+  [[ ( "$a" == /* || "$a" == ./* || "$a" == ../* || "$a" == . || "$a" == .. ) && -d "$a" ]] && return 0
   return 1
 }
 
@@ -746,6 +904,16 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
       _recap_msg -b "File not found: $url"
       return 1
     fi
+  fi
+  if (( ! local_pdf )) && [[ "$url" == /* || "$url" == ./* || "$url" == ../* ]]; then
+    if [[ -d "$url" ]]; then
+      _recap_msg -b "That is a folder: $url" "Give recapurl the folder on its own and it summarizes the PDF files in it."
+    elif [[ -e "$url" ]]; then
+      _recap_msg -b "recapurl reads web addresses, YouTube links and PDF files." "For a text file use: recap < $url"
+    else
+      _recap_msg -b "File not found: $url"
+    fi
+    return 1
   fi
   (( local_pdf )) || { [[ "$url" == http://* || "$url" == https://* ]] || url="https://$url"; }
 
@@ -808,6 +976,10 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
   final=$(print -r -- "$info" | sed -n 's/^final=//p' | head -1)
   [[ "$info" == *cutoff=1* ]] && cutoff=1
   [[ "$info" == *paywall=1* ]] && paywall=1
+  local author site channel byline="" host
+  author=$(print -r -- "$info" | sed -n 's/^author=//p' | head -1)
+  site=$(print -r -- "$info" | sed -n 's/^site=//p' | head -1)
+  channel=$(print -r -- "$info" | sed -n 's/^channel=//p' | head -1)
 
   if (( is_yt )); then
     case $code in
@@ -921,15 +1093,24 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
     src_note="$url (text appears cut off: possibly a paywalled teaser)"
   fi
 
+  host="${${url#*://}%%[/?#]*}"; host="${host#www.}"
+  if (( is_yt )); then
+    byline="Site: youtube.com"; [[ -n "$channel" ]] && byline="Channel: $channel | $byline"
+  elif (( local_pdf )); then
+    byline="File: ${url:t}"; [[ -n "$author" ]] && byline="Author: $author | $byline"
+  else
+    byline="Site: ${site:-$host}"; [[ -n "$author" ]] && byline="Author: $author | $byline"
+  fi
+
   if (( words > ${RECAP_LONG_WORDS:-4000} )); then
     case "$1" in
       short|changes)
         _recap_msg "'$1' only applies under ${RECAP_LONG_WORDS:-4000} words." "Summarizing in parts without it."
         shift ;;
     esac
-    RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recaplong "$@" || rc=$?
+    RECAP_NO_LEAD=1 RECAP_QUIET_DONE=1 RECAP_BYLINE="$byline" RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recaplong "$@" || rc=$?
   else
-    RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recap "$@" || rc=$?
+    RECAP_NO_LEAD=1 RECAP_QUIET_DONE=1 RECAP_BYLINE="$byline" RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recap "$@" || rc=$?
   fi
   rm -f "$tmp"
   return $rc
@@ -952,45 +1133,137 @@ _recap_batch_mode() {   # $1 = mode from the flag (single|separate|empty); print
 # The first argument is always an address. Further arguments that start with http:// or https://
 # (or www.) are more addresses; anything after them is a mode or focus applied to every address.
 recapurl() {
-  local -a urls failed reasons lines
-  local i=0 ok=0 j u mode="" coll="" final=""
-  while [[ "$1" == --single || "$1" == --separate ]]; do mode="${1#--}"; shift; done
+  local -a urls keys cleans skipped failed reasons lines seen_lines expanded pdfs kc reused
+  local i=0 ok=0 rc=0 j u c k line d rest total mode="" coll="" final="" again=0 t0=$SECONDS folder_used=0 ans saved_file saved_date uniq_seen="" flag=""
+  while [[ "$1" == --single || "$1" == --separate || "$1" == --again || "$1" == --notify ]]; do
+    case "$1" in
+      --single|--separate) mode="${1#--}" ;;
+      --again) again=1 ;;
+      --notify) local RECAP_NOTIFY=1 ;;
+    esac
+    shift
+  done
   if [[ -z "$1" || "$1" == help || "$1" == -h || "$1" == --help ]]; then
-    _recap_msg -b "Usage: recapurl [--single | --separate] \"ADDRESS\" [\"ADDRESS\" ...] [short | changes | \"focus text\"]" "Put each address in quotes (addresses with ? or & break otherwise)."
-    _recap_msg "Fetches a web article, strips menus and ads, and summarizes it." "For a YouTube video it reads the captions. A PDF (an address or a file on this Mac) is read too. Not for other audio or video." "Several are summarized one after another; extra ones must start with https:// or www., or be a .pdf file." "For several addresses, --single saves all summaries in one file and --separate gives each its own." "Without a flag it asks (or set RECAP_BATCH=single or separate). With one address the flags do nothing." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
+    _recap_msg -b "Usage: recapurl [--single | --separate] [--again] [--notify] \"ADDRESS\" [\"ADDRESS\" ...] [short | changes | \"focus text\"]" "Put each address in quotes (addresses with ? or & break otherwise)."
+    _recap_msg "Fetches a web article, strips menus and ads, and summarizes it. For a YouTube video it reads the captions." "A PDF (an address or a file on this Mac) is read too. A folder gives every PDF in it. Not for other audio or video." "Several are summarized one after another; extra ones must start with https:// or www., or be a PDF file or a folder." "Duplicate addresses are skipped. The page's author and site are shown under the heading when they can be found." "An address you summarized before is not summarized again: the saved summary is shown (add --again to redo it)." "For several addresses, --single saves all summaries in one file and --separate gives each its own." "Without a flag it asks (or set RECAP_BATCH=single or separate). With --notify (or RECAP_NOTIFY=1) a long run ends with a notification and a sound." "The flags can come before or after the addresses." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
     [[ -z "$1" ]] && return 1
     return 0
   fi
   if [[ "$1" == --* ]]; then
-    _recap_msg -b "Unknown option: $1" "Options: --single, --separate (only used with several addresses)."
+    _recap_msg -b "Unknown option: $1" "Options: --single, --separate, --again, --notify."
     return 1
   fi
   _recap_ensure_ollama || return 1
   urls=("$1"); shift
   while [[ -n "$1" ]] && _recap_is_addr "$1"; do urls+=("$1"); shift; done
+  while [[ "$1" == --single || "$1" == --separate || "$1" == --again || "$1" == --notify ]]; do   # flags may follow the addresses too
+    case "$1" in
+      --single|--separate) mode="${1#--}" ;;
+      --again) again=1 ;;
+      --notify) local RECAP_NOTIFY=1 ;;
+    esac
+    shift
+  done
 
-  if (( ${#urls} == 1 )); then
-    _recap_url_one "${urls[1]}" "$@"
-    return $?
-  fi
-
-  mode=$(_recap_batch_mode "$mode")
-  if [[ "$mode" == single ]]; then
-    coll=$(mktemp)
-    _recap_msg -b "Saving all summaries in one combined file."
-  else
-    _recap_msg -b "Saving one file per address."
-  fi
-
+  # a folder stands for the PDF files inside it
   for u in "${urls[@]}"; do
-    i=$((i+1))
-    _recap_msg -b "Link $i of ${#urls}"
-    if RECAP_COLLECT="$coll" RECAP_NO_LEAD=1 _recap_url_one "$u" "$@"; then
-      ok=$((ok+1))
+    d="$u"; [[ "$d" == "~/"* ]] && d="$HOME/${d:2}"
+    if [[ "$u" != http://* && "$u" != https://* && -d "$d" ]]; then
+      pdfs=("$d"/*.[pP][dD][fF](N.on))
+      if (( ${#pdfs} == 0 )); then
+        _recap_msg -b "No PDF files in that folder:" "  $u"
+        continue
+      fi
+      folder_used=1
+      _recap_msg -b "Found ${#pdfs} PDF file(s) in:" "  $u"
+      expanded+=("${pdfs[@]}")
     else
-      failed+=("$u"); reasons+=("$_RECAP_FIRST_MSG")
+      expanded+=("$u")
     fi
   done
+  urls=("${expanded[@]}")
+  (( ${#urls} )) || return 1
+  if (( folder_used && ${#urls} > ${_RECAP_FOLDER_ASK:-10} )) && [[ -t 0 && -t 2 ]]; then
+    read -k 1 "ans?Summarize all ${#urls} files? Each one can take a minute or more. [y/N] "
+    print -u2 ""
+    [[ "$ans" == [yY] ]] || { _recap_msg -b "Stopped. Nothing summarized."; return 1; }
+  fi
+
+  # clean the addresses and skip duplicates (the same page with tracking junk, a trailing slash, www., youtu.be ...)
+  kc=(${(f)"$(_recap_urltool keys "${urls[@]}" 2>/dev/null)"})
+  if (( ${#kc} == ${#urls} )); then
+    for ((j=1; j<=${#urls}; j++)); do
+      line="${kc[j]}"; k="${line%%$'\t'*}"; c="${line#*$'\t'}"
+      if [[ $'\n'"$uniq_seen"$'\n' == *$'\n'"$k"$'\n'* ]]; then
+        skipped+=("${urls[j]}")
+      else
+        uniq_seen+="$k"$'\n'; keys+=("$k"); cleans+=("$c")
+      fi
+    done
+  else
+    cleans=("${urls[@]}")
+  fi
+  (( ${#skipped} )) && _recap_msg -b "Skipped ${#skipped} duplicate address(es):" "${(@)skipped/#/  }"
+  total=${#cleans}
+
+  # addresses already summarized earlier (only for a plain summary: a mode or focus text asks for something different)
+  if (( ! again && $# == 0 && ${#keys} )); then
+    seen_lines=(${(f)"$(_recap_urltool seen "$RECAP_DIR" "${keys[@]}" 2>/dev/null)"})
+  fi
+
+  if (( total > 1 )); then
+    mode=$(_recap_batch_mode "$mode")
+    if [[ "$mode" == single ]]; then
+      coll=$(mktemp)
+      _recap_msg -b "Saving all summaries in one combined file."
+    else
+      _recap_msg -b "Saving one file per address."
+    fi
+  fi
+
+  for ((i=1; i<=total; i++)); do
+    u="${cleans[i]}"
+    (( total > 1 )) && _recap_msg -b "Link $i of $total"
+    saved_file=""; saved_date=""
+    if (( ${#keys} && ${#seen_lines} )); then
+      for line in "${seen_lines[@]}"; do
+        if [[ "${line%%$'\t'*}" == "${keys[i]}" ]]; then
+          rest="${line#*$'\t'}"; saved_file="${rest%%$'\t'*}"; saved_date="${rest#*$'\t'}"
+          break
+        fi
+      done
+    fi
+    if [[ -n "$saved_file" ]]; then
+      if [[ "${saved_file:t}" == *batch-of-* ]]; then
+        _recap_msg -b "Already summarized on $saved_date, as part of a combined file:" "  ${saved_file/#$HOME/~}" "To summarize it again, add --again."
+      else
+        _recap_msg -b "Already summarized on $saved_date:" "  ${saved_file/#$HOME/~}" "Showing the saved summary. To summarize it again, add --again."
+        cat "$saved_file"
+        if [[ -n "$coll" ]]; then
+          [[ -s "$coll" ]] && { print -r -- "---"; print ""; } >> "$coll"
+          cat "$saved_file" >> "$coll"
+        fi
+      fi
+      reused+=("$u"); ok=$((ok+1))
+      continue
+    fi
+    if (( total > 1 )); then
+      if RECAP_COLLECT="$coll" RECAP_NO_LEAD=1 RECAP_QUIET_DONE=1 _recap_url_one "$u" "$@"; then
+        ok=$((ok+1))
+      else
+        failed+=("$u"); reasons+=("$_RECAP_FIRST_MSG")
+      fi
+    else
+      RECAP_QUIET_DONE=1 _recap_url_one "$u" "$@"; rc=$?
+    fi
+  done
+
+  if (( total == 1 )); then
+    (( ${#reused} )) && rc=0
+    (( rc == 0 )) || flag=issues
+    _recap_notify "$t0" "$( (( rc == 0 )) && print 'Summary ready' || print 'Finished with issues' )" "recapurl" "$flag"
+    return $rc
+  fi
 
   if [[ -n "$coll" ]]; then
     if (( ok > 0 )); then
@@ -1011,10 +1284,13 @@ recapurl() {
 
   if (( ${#failed} )); then
     for ((j=1; j<=${#failed}; j++)); do lines+=("  ${failed[j]}" "    ${reasons[j]}"); done
-    _recap_msg -b "Finished: $ok of ${#urls} summarized." "Not summarized:" "${lines[@]}"
+    _recap_msg -b "Finished: $ok of $total summarized." "Not summarized:" "${lines[@]}"
+    flag=issues
   else
-    _recap_msg -b "Finished: all ${#urls} summarized."
+    _recap_msg -b "Finished: all $total summarized."
   fi
+  (( ${#reused} )) && _recap_msg "${#reused} of them were already summarized earlier, so the saved summaries were shown."
+  _recap_notify "$t0" "$ok of $total done" "recapurl" "$flag"
   (( ${#failed} == 0 ))
 }
 
@@ -1022,7 +1298,7 @@ recapurl() {
 # every web address found on the clipboard (one per line, anything else is ignored)
 recapurls() {
   local -a urls flags
-  while [[ "$1" == --single || "$1" == --separate ]]; do flags+=("$1"); shift; done
+  while [[ "$1" == --single || "$1" == --separate || "$1" == --again || "$1" == --notify ]]; do flags+=("$1"); shift; done
   if [[ -n "$1" ]] && _recap_is_addr "$1"; then   # addresses typed after the command: same as recapurl
     recapurl "${flags[@]}" "$@"
     return $?
@@ -1037,6 +1313,52 @@ recapurls() {
 }
 
 # --- Ollama: start it when it is not running ---------------------------
+recapfind() {   # search the saved summaries: every word must appear; capital letters do not matter
+  local dir="$RECAP_DIR" max=20 sources=0 w f d h n=0 shown=0
+  local -a words files
+  while [[ "$1" == --* ]]; do
+    case "$1" in
+      --sources) sources=1 ;;
+      --max) max="$2"; shift ;;
+      --help) set --; break ;;
+      *) _recap_msg -b "Unknown option: $1" "Options: --max N, --sources."; return 1 ;;
+    esac
+    shift
+  done
+  [[ "$1" == help || "$1" == -h ]] && set --
+  words=("$@")
+  if (( ${#words} == 0 )); then
+    _recap_msg -b "Usage: recapfind [--max N] [--sources] word [word ...]" "Searches your saved summaries in ${dir/#$HOME/~}. Every word must appear; capital letters do not matter." "--sources also searches the saved source texts and notes. Newest first, 20 at most (see --max)."
+    return 1
+  fi
+  [[ "$max" == <-> ]] || max=20
+  [[ -d "$dir" ]] || { _recap_msg -b "There is no summaries folder yet: ${dir/#$HOME/~}"; return 1; }
+  files=("$dir"/*(.N.om))
+  if (( sources )); then files=(${(M)files:#(*.md|*-source.txt|*-notes.txt)}); else files=(${(M)files:#*.md}); fi
+  for w in "${words[@]}"; do
+    (( ${#files} )) || break
+    files=(${(f)"$(grep -l -i -F -- "$w" "${files[@]}" 2>/dev/null)"})
+  done
+  n=${#files}
+  if (( n == 0 )); then
+    _recap_msg -b "Nothing found for: ${words[*]}"
+    return 1
+  fi
+  for f in "${files[@]}"; do
+    (( shown >= max )) && break
+    shown=$((shown+1))
+    d="${${f:t}[1,10]}"
+    h=$(grep -m1 -E '^#{1,2} ' "$f" 2>/dev/null | sed -E 's/^#+ +//')
+    [[ -z "$h" ]] && h=$(grep -m1 -v '^[[:space:]]*$' "$f" 2>/dev/null | cut -c1-90)
+    print -r -- "$d  $h"
+    print -r -- "  ${f/#$HOME/~}"
+    grep -v -E '^(#|Source:|Author:|Channel:|Site:|[[:space:]]*$)' "$f" 2>/dev/null | grep -i -F -m2 -- "${words[1]}" | cut -c1-150 | sed 's/^/    | /'
+    print ""
+  done
+  (( n > shown )) && print -r -- "$((n - shown)) more not shown. Use --max N to see more."
+  print -r -- "$n file(s) matched."
+}
+
 _recap_ensure_ollama() {   # makes sure the Ollama server is running, and starts it if it is not
   command -v ollama >/dev/null 2>&1 || {
     _recap_msg -b "Ollama is not installed." "Install it from https://ollama.com (download it and open the app), then try again."
@@ -1062,7 +1384,7 @@ _recap_ensure_ollama() {   # makes sure the Ollama server is running, and starts
 }
 
 _recap_has_summary() {   # does the saved text hold more than the heading and the Source line?
-  grep -v -E '^(## |Source:|[[:space:]]*$)' "$1" | grep -q .
+  grep -v -E '^(## |Source:|Author:|Channel:|Site:|[[:space:]]*$)' "$1" | grep -q .
 }
 
 # --- Python environment and model: setup and health check ------------

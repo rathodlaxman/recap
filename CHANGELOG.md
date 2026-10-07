@@ -2,6 +2,24 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-10-07
+
+### Added
+
+- **Duplicates skipped.** `recapurl` and `recapurls` treat the same page as one even when it has tracking parameters, `www.`, `http`, a trailing slash or a `#` part, or when a YouTube video is given as `youtu.be/…`, `watch?v=…` or `shorts/…`. The same file given two ways counts once too. Skipped duplicates are listed.
+- **Author and clean source.** Under the heading, `Source:` shows the cleaned address, and a second line shows `Author: … | Site: …` (or `Channel: … | Site: youtube.com` for YouTube) when they can be found.
+- **A notification and sound when a run ends.** Add `--notify` to a summarizing command, or set `RECAP_NOTIFY=1`. It fires only for runs longer than `RECAP_NOTIFY_AFTER` seconds (20), once per batch, with a warning sound if something failed. `RECAP_NOTIFY_SOUND` changes the sound.
+- **Remembers what you summarized.** An address you already summarized shows the saved summary instead of running again. `--again` redoes it, and a mode or focus text always runs.
+- **`recapfind`** searches your saved summaries (every word must appear, capital letters do not matter, newest first). `--max N` and `--sources` adjust it.
+- **Folders of PDFs.** `recapurl FOLDER` summarizes every PDF directly inside the folder.
+- **PDF author and file name.** For a PDF, `Author:` is read from a "by …" or "Prepared by …" line on page 1 (never from the PDF's metadata), and a PDF on your Mac shows `File: name.pdf`. A first line that looks like a document code, such as "IIMA/ BP0370," is no longer used as the heading: the file name is.
+- **Flags after the addresses.** `--again`, `--notify`, `--single` and `--separate` now work after the addresses too, for example `recapurl "https://…" --again`. Before, a flag in that position was passed to the model as a focus text.
+
+### Fixed
+
+- Giving `recapurl` a folder used to print a misleading "No response from the site." A missing path now says "File not found," and a text file gets a pointer to `recap < file.txt`.
+- The check for an empty summary now ignores the new author and site lines.
+
 ## [1.0.1] - 2026-10-07
 
 ### Fixed
