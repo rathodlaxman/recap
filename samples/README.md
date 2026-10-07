@@ -1,6 +1,6 @@
 # Sample texts
 
-Short texts for trying Recap's copied-text commands. They are fictional and were written for Recap's examples, so any names, places and figures in them are made up. They are free to use under the same MIT licence as the rest of the project.
+Short texts for trying Recap's copied-text commands. They are fictional and were written for Recap's examples, so any names, places and figures in them are made up. They are free to use under the same MIT license as the rest of the project.
 
 Run these from the Recap folder. The `<` tells Recap to read a file, so you do not need the clipboard.
 

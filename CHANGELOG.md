@@ -2,7 +2,17 @@
 
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.1] - 2026-10-07
+
+### Fixed
+
+- Recap now starts Ollama itself when it is not running, for example after a restart. Before, it fetched the page and then failed with "could not connect to ollama server." It opens the Ollama app hidden if the app is installed, otherwise it runs `ollama serve`, waits up to 30 seconds, and says what it is doing. `recapsetup` does the same.
+- Recap no longer saves an empty summary (only a heading and a source line) when the model returns nothing. It says "No summary was produced" and saves nothing. In a batch of addresses, that address now counts as failed.
+
+### Changed
+
+- All documentation and on-screen messages now use US English (summarize, license, behavior, organization, gray), and dates in the documentation are written like "Oct 7, 2026." The summarizing prompts use the US spelling too.
+- `recapdoctor` now says that Recap commands start Ollama automatically.
 
 ### Added
 
@@ -15,11 +25,11 @@ First public release.
 ### Added
 
 - Summaries of copied text: `recap` (with `short`, `changes` and your own focus), `recaplong` for long texts, `recapall` for several articles at once, `recapc` to copy the result, and `recapmail` for emails. One model, `gemma4-sum`, does every job; `RECAP_MAIL_MODEL` can give `recapmail` a different one.
-- `recapurl` and `recapurls`: summarise a web article, a YouTube video's captions, or a PDF (an address or a file on the Mac), one or several at a time, with `--single` or `--separate` output.
+- `recapurl` and `recapurls`: summarize a web article, a YouTube video's captions, or a PDF (an address or a file on the Mac), one or several at a time, with `--single` or `--separate` output.
 - Every command that takes text also accepts a file or a pipe: `recap < file.txt`, `cat file.txt | recap`. With nothing given, it reads the clipboard. `recapc` accepts a mode and a file too.
 - A clear message when the clipboard holds a command instead of text (for example after copying `recap` from a web page), and how to fix it.
-- Checks that stop instead of summarising a paywall notice, an error page, a scanned PDF, or text over 10,000 words.
-- `recapsetup`, a one-time setup that installs the Python packages in a private environment and downloads and builds the summarising model, and `recapdoctor`, which checks the whole setup. `recap version` shows the version.
+- Checks that stop instead of summarizing a paywall notice, an error page, a scanned PDF, or text over 10,000 words.
+- `recapsetup`, a one-time setup that installs the Python packages in a private environment and downloads and builds the summarizing model, and `recapdoctor`, which checks the whole setup. `recap version` shows the version.
 - Summaries are saved as Markdown in `~/Summaries`, with the source text kept beside them for address runs.
 - A README with a quick start and an example for every feature, a step-by-step `GETTING-STARTED.md` for people new to Terminal, a printable MANUAL, and a `samples` folder of short fictional texts so every copied-text command can be tried in seconds.
 

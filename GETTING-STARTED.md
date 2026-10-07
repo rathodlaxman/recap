@@ -2,7 +2,7 @@
 
 This guide is for people who have never used Terminal. Follow the steps in order. You do not need to understand them to make them work. If something goes wrong, jump to "If something goes wrong" at the end.
 
-**What Recap does.** You give it an article, a web page, a YouTube video or a PDF, and it writes a short summary for you. The summarising happens on your own Mac, using an AI model that you download once. It is not an app with windows and buttons: you use it by typing short commands in a program called Terminal.
+**What Recap does.** You give it an article, a web page, a YouTube video or a PDF, and it writes a short summary for you. The summarizing happens on your own Mac, using an AI model that you download once. It is not an app with windows and buttons: you use it by typing short commands in a program called Terminal.
 
 **What you need**
 
@@ -36,7 +36,7 @@ Ollama is the program that runs the AI model on your Mac.
 2. Type **Terminal** and press **Return**.
 3. A window opens with a line of text that ends in a **%** sign. That is where you type.
 
-**How to use the commands in this guide:** each command is in a grey box. Select the text in the box, copy it (**Command + C**), click in the Terminal window, paste it (**Command + V**), and press **Return**.
+**How to use the commands in this guide:** each command is in a gray box. Select the text in the box, copy it (**Command + C**), click in the Terminal window, paste it (**Command + V**), and press **Return**.
 
 **One important exception.** Copying a command replaces whatever was on your clipboard. So whenever a step tells you to copy some text first (such as an article), **type the command yourself** instead of copying it from this page. Otherwise Recap finds your command, not your article. (The steps that give Recap a file with `<` do not have this problem.)
 
@@ -71,7 +71,7 @@ Check that it worked:
 recap version
 ```
 
-You should see **Recap 1.0.0**.
+You should see **Recap 1.0.1**.
 
 ## Step 6. Run the one-time setup
 
@@ -81,10 +81,10 @@ recapsetup
 
 What to expect:
 
-- **macOS may open a window about "command line developer tools".** This is normal. Click **Install**, wait until it finishes (it can take a while), and then run `recapsetup` again.
+- **macOS may open a window about "command line developer tools."** This is normal. Click **Install**, wait until it finishes (it can take a while), and then run `recapsetup` again.
 - Recap installs some helper software in its own private folder. This takes about a minute.
 - Then it downloads the AI model. You will see progress bars. **This is the long part.** Keep the Mac awake and connected to the internet. If it stops, run `recapsetup` again.
-- It ends with **Setup is complete.** If it says Ollama is not installed or not running, open Ollama (Step 1) and run `recapsetup` again.
+- It ends with **Setup is complete.** If it says Ollama is not installed, install it (Step 1) and run `recapsetup` again. If Ollama is not running, Recap starts it for you. If it says it did not start in time, open the Ollama app yourself, wait a few seconds, and run `recapsetup` again.
 
 ## Step 7. Check that everything is fine
 
@@ -96,13 +96,13 @@ You should see lines starting with **ok** and the result **all checks passed**. 
 
 ## Step 8. Your first summary
 
-The Recap folder contains a **samples** folder with short texts, so your first result comes quickly and needs no internet. This tells Recap to read a sample news story and summarise it. You are still in the Recap folder from Step 4, so type:
+The Recap folder contains a **samples** folder with short texts, so your first result comes quickly and needs no internet. This tells Recap to read a sample news story and summarize it. You are still in the Recap folder from Step 4, so type:
 
 ```
 recap < samples/sample-article.txt
 ```
 
-The `<` means "read from this file". You will see a few messages, and then the summary, usually within a minute. The summary is also saved: open **Finder**, choose **Go**, then **Home**, and look in the **Summaries** folder.
+The `<` means "read from this file." You will see a few messages, and then the summary, usually within a minute. The summary is also saved: open **Finder**, choose **Go**, then **Home**, and look in the **Summaries** folder.
 
 Now try a shorter version of the same text:
 
@@ -112,7 +112,7 @@ recap short < samples/sample-article.txt
 
 ## Step 9. A web page
 
-This summarises a short article from the internet (about 1,100 words, so allow about a minute):
+This summarizes a short article from the internet (about 1,100 words, so allow about a minute):
 
 ```
 recapurl "https://collabfund.com/blog/ideas-that-changed-my-life/"
@@ -138,20 +138,20 @@ If your text is in a file instead, give Recap the file: `recap < myfile.txt`.
 
 | What you want | What to type |
 | --- | --- |
-| Summarise the text you copied | `recap` |
-| Summarise a text file | `recap < myfile.txt` |
+| Summarize the text you copied | `recap` |
+| Summarize a text file | `recap < myfile.txt` |
 | A shorter summary | `recap short` |
 | A summary about one thing | `recap "focus on the costs"` |
-| Summarise a very long text | `recaplong` |
+| Summarize a very long text | `recaplong` |
 | A circular or rule change | `recap changes` |
 | An email | `recapmail` |
 | Several articles at once (a line with only `@@@@` between them) | `recapall` |
-| Summarise a web page | `recapurl "https://..."` |
-| Summarise several pages | `recapurl "https://..." "https://..."` or `recapurls "https://..." "https://..."` |
-| Summarise a list of addresses you copied (one per line) | `recapurls` |
-| Summarise a YouTube video | `recapurl "https://www.youtube.com/watch?v=..."` |
-| Summarise a PDF address | `recapurl "https://.../file.pdf"` |
-| Summarise a PDF file on your Mac | `recapurl ` and then drag the file into Terminal |
+| Summarize a web page | `recapurl "https://..."` |
+| Summarize several pages | `recapurl "https://..." "https://..."` or `recapurls "https://..." "https://..."` |
+| Summarize a list of addresses you copied (one per line) | `recapurls` |
+| Summarize a YouTube video | `recapurl "https://www.youtube.com/watch?v=..."` |
+| Summarize a PDF address | `recapurl "https://.../file.pdf"` |
+| Summarize a PDF file on your Mac | `recapurl ` and then drag the file into Terminal |
 | Check that everything works | `recapdoctor` |
 | See which version you have | `recap version` |
 
@@ -159,10 +159,12 @@ If your text is in a file instead, give Recap the file: `recap < myfile.txt`.
 
 | What you see | What to do |
 | --- | --- |
-| "The clipboard holds a command, not an article", or "Only 1 words found" (a very small number) | Almost always you copied the command after copying the article, and the command replaced the article. Copy the article again, then **type** `recap` (do not copy it). Or skip the clipboard and give Recap the file: `recap < myfile.txt`. |
+| "The clipboard holds a command, not an article," or "Only 1 words found" (a very small number) | Almost always you copied the command after copying the article, and the command replaced the article. Copy the article again, then **type** `recap` (do not copy it). Or skip the clipboard and give Recap the file: `recap < myfile.txt`. |
 | `command not found: recap` | Recap is not switched on in this window. Type `source ~/.zshrc`. If that does not help, repeat Steps 4 and 5. |
 | `no matches found` or strange errors with an address | The quote marks are missing or curly. Put the address in plain straight quotes `"`. |
-| "Ollama is installed but not running" | Open the Ollama app (Step 1), wait a few seconds, and try again. |
+| "Ollama is not running. Starting it now..." | Normal, for example after a restart. Recap starts Ollama and carries on. Nothing to do. |
+| "Ollama did not start in time" | Open the Ollama app yourself (Step 1), wait a few seconds, and try again. |
+| "No summary was produced" | The model returned nothing, so nothing was saved. Run `recapdoctor`, then try again. |
 | The model download stopped or failed | Check your internet connection and run `recapsetup` again. |
 | "That is N words: too long" | Choose a shorter page, or copy part of the text and use `recaplong`. |
 | "The page marks its article as paywalled" or "HTTP 403" | The site does not allow automatic reading. Copy the text yourself and use `recap`. |
@@ -182,4 +184,4 @@ If your text is in a file instead, give Recap the file: `recap < myfile.txt`.
 
 ## What stays on your Mac
 
-Summarising copied text and PDF files already on your Mac never leaves the Mac. Commands that take a web address download that page from its website first. Everything Recap saves in the Summaries folder is ordinary text that anyone using your Mac can read. See the README for details, including a note about sensitive material.
+Summarizing copied text and PDF files already on your Mac never leaves the Mac. Commands that take a web address download that page from its website first. Everything Recap saves in the Summaries folder is ordinary text that anyone using your Mac can read. See the README for details, including a note about sensitive material.

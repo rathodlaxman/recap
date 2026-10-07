@@ -8,6 +8,6 @@
 
 - [ ] `zsh -n recap.zsh` prints nothing
 - [ ] I ran every command this change touches
-- [ ] README or MANUAL updated if behaviour changed
+- [ ] README or MANUAL updated if behavior changed
 - [ ] No private text, saved summaries or copyrighted articles are included
-- [ ] If this changes the summarising prompt, I added before and after summaries of the same texts
+- [ ] If this changes the summarizing prompt, I added before and after summaries of the same texts

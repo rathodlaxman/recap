@@ -23,7 +23,7 @@ Open an issue and describe the problem you are trying to solve before the soluti
 ## Sending a change
 
 1. Fork the repository and create a branch for one change.
-2. Make the change in `recap.zsh` (and the README or MANUAL if behaviour changes).
+2. Make the change in `recap.zsh` (and the README or MANUAL if behavior changes).
 3. Check your change (see below).
 4. Open a pull request and say what changed, why, and how you tested it.
 
@@ -42,7 +42,7 @@ There is no automated test suite yet, so please check by hand:
 - Recap is zsh on macOS only. It uses `pbcopy` and `pbpaste`.
 - Helper functions start with `_recap_`. Messages shown on screen go through `_recap_msg`, so spacing stays consistent.
 - Do not add a runtime dependency without opening an issue first. The address commands use only the packages installed by `recapsetup`.
-- **The summarising prompt (`_recap_prompt`) is deliberately short.** A much longer prompt gave worse results in testing. If you propose a change to it, show before and after summaries of the same texts, with the source text, so the effect can be judged.
+- **The summarizing prompt (`_recap_prompt`) is deliberately short.** A much longer prompt gave worse results in testing. If you propose a change to it, show before and after summaries of the same texts, with the source text, so the effect can be judged.
 - Do not commit saved summaries, source texts, or anyone's private text. Use your own writing or public-domain text for examples.
 - Do not include copyrighted articles in the repository.
 

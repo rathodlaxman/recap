@@ -1,10 +1,10 @@
 # Recap
 
-**Recap is a free, open-source command-line tool for macOS that summarises articles, web pages, YouTube videos and PDFs on your own Mac, using a local AI model.** You type one short command in Terminal and read the gist. It is not an app with windows and buttons: you run it from Terminal.
+**Recap is a free, open-source command-line tool for macOS that summarizes articles, web pages, YouTube videos and PDFs on your own Mac, using a local AI model.** You type one short command in Terminal and read the gist. It is not an app with windows and buttons: you run it from Terminal.
 
 **New to Terminal? Start with [GETTING-STARTED.md](GETTING-STARTED.md).** It walks through every step in plain language.
 
-The summarising happens on your Mac through [Ollama](https://ollama.com), so no article text is sent to any AI service. The clipboard commands (`recap`, `recaplong`, `recapall`, `recapmail`) work without a network connection. The address commands (`recapurl`, `recapurls`) need one to fetch a web page, a YouTube video's captions or a PDF at an address. A PDF file already on the Mac is read offline. Built and tuned on a MacBook Air M1 with 8 GB of RAM.
+The summarizing happens on your Mac through [Ollama](https://ollama.com), so no article text is sent to any AI service. The clipboard commands (`recap`, `recaplong`, `recapall`, `recapmail`) work without a network connection. The address commands (`recapurl`, `recapurls`) need one to fetch a web page, a YouTube video's captions or a PDF at an address. A PDF file already on the Mac is read offline. Built and tuned on a MacBook Air M1 with 8 GB of RAM.
 
 ## Quick start
 
@@ -16,7 +16,7 @@ The summarising happens on your Mac through [Ollama](https://ollama.com), so no 
    echo "source $PWD/recap.zsh" >> ~/.zshrc
    source ~/.zshrc
    ```
-5. **Run the one-time setup.** It installs what the address commands need and downloads the summarising model (about 4.6 GB, once):
+5. **Run the one-time setup.** It installs what the address commands need and downloads the summarizing model (about 4.6 GB, once):
    ```sh
    recapsetup
    ```
@@ -24,7 +24,7 @@ The summarising happens on your Mac through [Ollama](https://ollama.com), so no 
    ```sh
    recapdoctor
    ```
-7. **Summarise a short sample.** The Recap folder has a `samples` folder with short texts. This tells Recap to read one of them (`<` means "read from this file"; it needs no internet):
+7. **Summarize a short sample.** The Recap folder has a `samples` folder with short texts. This tells Recap to read one of them (`<` means "read from this file"; it needs no internet):
    ```sh
    recap < samples/sample-article.txt
    ```
@@ -35,7 +35,7 @@ Keep the Recap folder where it is. If you move it, repeat step 4 and delete the 
 
 ## Examples
 
-Start with the samples, which need no internet and finish quickly. Then try a web page. Copy a command from a grey box and paste it into Terminal. **Type or copy the straight quote marks (`"`).** If you copy from Word, Notes or WhatsApp, the quotes can turn curly (`“ ”`) and the command fails.
+Start with the samples, which need no internet and finish quickly. Then try a web page. Copy a command from a gray box and paste it into Terminal. **Type or copy the straight quote marks (`"`).** If you copy from Word, Notes or WhatsApp, the quotes can turn curly (`“ ”`) and the command fails.
 
 **How long things take.** On the tested Mac (an M1 with 8 GB of memory), allow 30 to 90 seconds for a text of about 1,000 words. Longer texts are read in parts and take minutes: the Wikipedia article "AI agent" (about 7,300 words) is read in seven parts, which Recap estimates at about five minutes, and "Generative artificial intelligence" (about 13,000 words) is refused as too long. The examples below are short on purpose.
 
@@ -172,9 +172,9 @@ Every summary is also saved as a Markdown file in the `Summaries` folder in your
 
 | What you do | What leaves your Mac |
 | --- | --- |
-| Summarise copied text (`recap`, `recaplong`, `recapall`, `recapmail`) | Nothing. The model runs locally |
-| Summarise a PDF file already on your Mac | Nothing |
-| `recapurl` or `recapurls` with a web address, YouTube link or PDF address | Your Mac downloads the page, captions or PDF directly from that site, which sees the request and your IP address. The text is then summarised locally |
+| Summarize copied text (`recap`, `recaplong`, `recapall`, `recapmail`) | Nothing. The model runs locally |
+| Summarize a PDF file already on your Mac | Nothing |
+| `recapurl` or `recapurls` with a web address, YouTube link or PDF address | Your Mac downloads the page, captions or PDF directly from that site, which sees the request and your IP address. The text is then summarized locally |
 | First-time setup | Downloads of Ollama, the model (about 4.6 GB) and the Python packages, all done by `recapsetup` |
 
 Recap itself sends nothing anywhere except the downloads you ask for. It does not control what Ollama or the Python packages do; see their own documentation.
@@ -187,7 +187,7 @@ Summaries come from a small local model and can be wrong. In testing, no invente
 
 ## Sensitive material
 
-Recap summarises on your Mac, so copied text and PDF files already on the Mac are not sent to an AI service. It is not audited or certified, and this README makes no claim that it meets any organisation's security or compliance requirements. Before using it on official, confidential or regulated material, check what your organisation permits. Weigh these points:
+Recap summarizes on your Mac, so copied text and PDF files already on the Mac are not sent to an AI service. It is not audited or certified, and this README makes no claim that it meets any organization's security or compliance requirements. Before using it on official, confidential or regulated material, check what your organization permits. Weigh these points:
 
 - Setup downloads Ollama, models and Python packages from the internet, and offline installation is not documented.
 - The address commands contact the sites you name.
@@ -209,10 +209,10 @@ To report a security problem privately, see `SECURITY.md`.
 | `recapall` | Several articles in one run, separated by lines containing only `@@@@`. An article over 4,000 words is read in parts automatically |
 | `recapc` | Same as `recap`, and also copies the summary to the clipboard |
 | `recapmail` | Short email summary: sender, tasks, deadlines, whether a reply is needed. Uses the same model as everything else |
-| `recapurl "ADDRESS"` | Fetches a web article, the captions of a YouTube video, or a PDF (an address or a file on the Mac), and summarises it |
+| `recapurl "ADDRESS"` | Fetches a web article, the captions of a YouTube video, or a PDF (an address or a file on the Mac), and summarizes it |
 | `recapurl "A" "B"` | Several addresses or PDF files in one run. `--single` saves one combined file, `--separate` one file each |
-| `recapurls` | Summarises the addresses typed after it, or every web address on the clipboard (one per line). Same flags as `recapurl` |
-| `recapsetup` | One-time setup: the private Python environment and the summarising model |
+| `recapurls` | Summarizes the addresses typed after it, or every web address on the clipboard (one per line). Same flags as `recapurl` |
+| `recapsetup` | One-time setup: the private Python environment and the summarizing model |
 | `recapdoctor` | Checks the whole setup and says what to fix. Safe to paste into a bug report |
 | `recap help` | Lists the options |
 | `recap version` | Shows which version of Recap this is |
@@ -250,7 +250,9 @@ recapsetup
 It does two things:
 
 - **The Python packages.** `recapurl` and `recapurls` need three (`trafilatura`, `youtube-transcript-api`, `pypdfium2`). `recapsetup` creates a private Python environment in `~/.recap/venv` and installs them there. This takes about a minute and needs a network connection. It never touches your own Python, so it also works when `pip` refuses to install into a Python managed by Homebrew (the `externally-managed-environment` error).
-- **The summarising model.** It downloads `gemma4:e2b` (about 4.6 GB, once) and builds the model `gemma4-sum` from it, with the settings Recap needs. If Ollama is not installed or not running, it says so; install or open it and run `recapsetup` again.
+- **The summarizing model.** It downloads `gemma4:e2b` (about 4.6 GB, once) and builds the model `gemma4-sum` from it, with the settings Recap needs. If Ollama is not running, Recap starts it for you (it opens the Ollama app in the background, or runs `ollama serve`). If Ollama is not installed, it says so; install it and run `recapsetup` again.
+
+**Recap starts Ollama when needed.** After a restart you do not have to open the Ollama app first: every command that needs the model checks that Ollama is running, starts it if it is not, and waits up to 30 seconds. You can also have the Ollama app open at login if you prefer.
 
 **One model does every job.** `gemma4-sum` is used for `recap`, `recaplong`, `recapall`, `recapurl`, `recapurls` and `recapmail`. You do not need any other model. `recapsetup --no-model` skips the model step if you want to set it up yourself.
 
@@ -335,11 +337,11 @@ Put every address in double quotes. Addresses containing `?` or `&` break otherw
 - **Web pages.** Menus, ads and comments are stripped (trafilatura), and the headline and byline are added. A page over 4,000 words is read in parts, the way `recaplong` does it. `short` and `changes` apply only below that length.
 - **Length limit.** Above 10,000 words `recapurl` stops (web page, YouTube transcript or PDF), saves the text, and suggests copying one chapter or section and using `recaplong`. The part-by-part method has been tested only up to about 6,600 words, and past roughly 10,000 words its combined notes probably no longer fit in the model's memory. `RECAP_URL_MAX=20000 recapurl "ADDRESS"` raises the limit for one run.
 - **YouTube.** The captions are read: English captions uploaded by the channel first, then YouTube's automatic English captions, then any language. The video title and channel are added at the top. The channel is the uploader, not necessarily the speaker. Channel and playlist pages, videos without captions, Vimeo, Spotify and audio or video files are refused with a message.
-- **PDFs.** Give a PDF address (one that serves a PDF is detected even without ".pdf" in its name) or the path of a PDF on the Mac. The text is cleaned before summarising: the line breaks of each printed line are joined into paragraphs, words split by a hyphen at a line end are mended, and page numbers, headers and footers repeated on many pages, web addresses at the page edge and copyright lines are dropped. The title is the first short line of page 1 (the PDF's own title field is unreliable), or the file name if there is none. A PDF with no readable text (scanned pages), a password-protected one, a file that is not really a PDF, a damaged one and one over 30 MB are refused with a message.
+- **PDFs.** Give a PDF address (one that serves a PDF is detected even without ".pdf" in its name) or the path of a PDF on the Mac. The text is cleaned before summarizing: the line breaks of each printed line are joined into paragraphs, words split by a hyphen at a line end are mended, and page numbers, headers and footers repeated on many pages, web addresses at the page edge and copyright lines are dropped. The title is the first short line of page 1 (the PDF's own title field is unreliable), or the file name if there is none. A PDF with no readable text (scanned pages), a password-protected one, a file that is not really a PDF, a damaged one and one over 30 MB are refused with a message.
 - **Files saved.** The summary gets a `Source:` line, marked `(PDF)`, `(YouTube captions, automatic)` or `(text appears cut off: possibly a paywalled teaser)` where that applies. The exact text the model read is saved next to it as `YYYY-MM-DD-title-source.txt`, so a summary can be checked against it. Long texts also save a `-notes.txt` file.
-- **It stops instead of summarising** when the page marks its article as members-only, when fewer than 150 words come back (60 for YouTube and PDFs), when the site answers with an HTTP error (the status is shown), or when it redirects to a login page. `RECAP_URL_FORCE=1 recapurl "ADDRESS"` skips the paywall, short-text and length checks.
+- **It stops instead of summarizing** when the page marks its article as members-only, when fewer than 150 words come back (60 for YouTube and PDFs), when the site answers with an HTTP error (the status is shown), or when it redirects to a login page. `RECAP_URL_FORCE=1 recapurl "ADDRESS"` skips the paywall, short-text and length checks.
 - **Several addresses** run one after another. A failed address does not stop the rest, and the final list shows each failure with its reason. Extra addresses must start with `https://` or `www.`, or be a `.pdf` file. A mode or focus placed after the addresses applies to all of them.
-- **One file or many.** For two or more addresses, `--single` saves one combined file and `--separate` gives each address its own. Without a flag, `RECAP_BATCH` decides, then the command asks once (only in a terminal), otherwise separate files are used. The combined file is `YYYY-MM-DD-batch-of-N-links.md`: one heading per summary, `---` between them, and a "Not summarised" section with reasons. In that mode no individual summary files are created. The source files are still saved, and the clipboard is not touched.
+- **One file or many.** For two or more addresses, `--single` saves one combined file and `--separate` gives each address its own. Without a flag, `RECAP_BATCH` decides, then the command asks once (only in a terminal), otherwise separate files are used. The combined file is `YYYY-MM-DD-batch-of-N-links.md`: one heading per summary, `---` between them, and a "Not summarized" section with reasons. In that mode no individual summary files are created. The source files are still saved, and the clipboard is not touched.
 
 ## How it is configured
 
@@ -359,7 +361,7 @@ ollama stop gemma4-sum
 
 Use a different model for a single run with `RECAP_MODEL=gemma-sum recap`.
 
-Alternatives were tried on one three-article batch each (5 Oct 2026). `phi4-mini` copied the example sentence from the prompt into its output and skipped the gist. `qwen3.5:4b` did not fit fully on the GPU of an 8 GB Mac (23%/77% CPU/GPU) and invented one figure. `gemma4:e2b` stays the default. One run each is guidance, not a measured result.
+Alternatives were tried on one three-article batch each (Oct 5, 2026). `phi4-mini` copied the example sentence from the prompt into its output and skipped the gist. `qwen3.5:4b` did not fit fully on the GPU of an 8 GB Mac (23%/77% CPU/GPU) and invented one figure. `gemma4:e2b` stays the default. One run each is guidance, not a measured result.
 
 Settings that can be put before a command, or exported in `~/.zshrc`:
 
@@ -385,19 +387,19 @@ Settings that can be put before a command, or exported in `~/.zshrc`:
 
 The context window holds roughly 7,000 words, but accuracy can fall before that ceiling. Measured against the source texts:
 
-| Article length | Behaviour |
+| Article length | Behavior |
 | --- | --- |
 | Up to ~1,500 words | Reliable. Figures, names and attribution generally correct |
 | 1,500-4,500 words | Mostly good (a 4,400-word essay and a 1,200-word one checked clean); occasional dropped detail |
 | Above ~5,000 words | Meaning can reverse in a single pass. Use `recaplong` |
 
-One real failure found at length: in a 5,900-word essay the single-pass summary turned "without solitude there would be no America" into "independent thinking without solitude", reversing the argument. Because that failure came from a single run, treat the thresholds above as guidance, not a measured limit. `recaplong` reads long text in roughly 1,200-word parts and combines the notes; on a 6,600-word transcript it kept every claim checked accurate, but its "Worth noting" section repeated points. A filter now drops "Worth noting" bullets that mostly repeat the main points, and it worked on the same transcript. `recapall`, `recapurl` and `recapurls` apply the part-by-part method automatically above 4,000 words. The method has an untested ceiling: the combined notes must fit the same 12,288-token window, which by estimate allows about 10,000 words of source text, so `recapurl` stops above that unless told otherwise.
+One real failure found at length: in a 5,900-word essay the single-pass summary turned "without solitude there would be no America" into "independent thinking without solitude," reversing the argument. Because that failure came from a single run, treat the thresholds above as guidance, not a measured limit. `recaplong` reads long text in roughly 1,200-word parts and combines the notes; on a 6,600-word transcript it kept every claim checked accurate, but its "Worth noting" section repeated points. A filter now drops "Worth noting" bullets that mostly repeat the main points, and it worked on the same transcript. `recapall`, `recapurl` and `recapurls` apply the part-by-part method automatically above 4,000 words. The method has an untested ceiling: the combined notes must fit the same 12,288-token window, which by estimate allows about 10,000 words of source text, so `recapurl` stops above that unless told otherwise.
 
 ## Known weaknesses
 
 No invented facts were found in the summaries checked, but five faults repeat. Treat a summary as a map of the article, not a replacement for it.
 
-- **Dropped hedges.** Qualifiers such as "very difficult", "possibly" or "the best explanation is" get trimmed, making claims sound firmer than the source.
+- **Dropped hedges.** Qualifiers such as "very difficult," "possibly" or "the best explanation is" get trimmed, making claims sound firmer than the source.
 - **Who said what.** A conclusion the author drew is credited to the person being quoted. Verify any "according to X" before repeating it.
 - **New versus unchanged rules.** In circulars, existing clauses can appear as if they were the changes. Use `recap changes`, then read the clauses it names.
 - **Flattened names.** "A journalist" or "a report" in place of the named person or publication.
@@ -426,10 +428,10 @@ The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model n
 
 ## Third-party software and terms
 
-- **Models.** Each model has its own licence and terms, shown on its page in the Ollama library. `recapsetup` downloads `gemma4:e2b`, and by downloading a model you accept its terms. Recap does not include or redistribute any model.
-- **Python packages.** `trafilatura`, `youtube-transcript-api` and `pypdfium2` (and the optional `pypdf`) are installed from PyPI by `recapsetup` under their own licences.
+- **Models.** Each model has its own license and terms, shown on its page in the Ollama library. `recapsetup` downloads `gemma4:e2b`, and by downloading a model you accept its terms. Recap does not include or redistribute any model.
+- **Python packages.** `trafilatura`, `youtube-transcript-api` and `pypdfium2` (and the optional `pypdf`) are installed from PyPI by `recapsetup` under their own licenses.
 - **YouTube.** Captions are read with an unofficial library that uses YouTube's undocumented access. It can stop working at any time and YouTube may restrict it. Use it at your own discretion.
-- **Web content.** You are responsible for having the right to read and summarise what you fetch. Recap does not bypass paywalls: when a page marks itself members-only it stops, and `RECAP_URL_FORCE=1` only skips the checks, so it summarises whatever text the site returned.
+- **Web content.** You are responsible for having the right to read and summarize what you fetch. Recap does not bypass paywalls: when a page marks itself members-only it stops, and `RECAP_URL_FORCE=1` only skips the checks, so it summarizes whatever text the site returned.
 
 ## Repository contents
 
@@ -440,7 +442,7 @@ The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model n
 - `README.md` — this file
 - `GETTING-STARTED.md` — a step-by-step guide for people new to Terminal
 - `samples/` — short fictional texts for trying the copied-text commands
-- `LICENSE` — the MIT licence
+- `LICENSE` — the MIT license
 - `CHANGELOG.md` — what changed in each version
 - `CONTRIBUTING.md` — how to report a problem or send a change
 - `SECURITY.md` — how to report a security problem privately
@@ -451,7 +453,7 @@ The `PROCESSOR` column should read `100% GPU`. A CPU/GPU split means the model n
 
 Bug reports and ideas are welcome. See `CONTRIBUTING.md` for how to report a problem or send a change, and for the project's conventions. Please do not paste private text into a public issue. Security problems are reported privately: see `SECURITY.md`. Changes between versions are listed in `CHANGELOG.md`.
 
-## Licence and support
+## License and support
 
 MIT, see `LICENSE`. Provided as is, without warranty of any kind.
 

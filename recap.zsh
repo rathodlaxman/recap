@@ -1,5 +1,5 @@
 # ============================================================
-#  Recap - offline article summariser  (Ollama + Gemma 4)
+#  Recap - offline article summarizer  (Ollama + Gemma 4)
 #  Add this block to ~/.zshrc, then run:  source ~/.zshrc
 #  Commands:  recap | recap short | recap changes | recaplong
 #             recapall | recapc | recapmail | recapurl | recapurls | recapsetup | recapdoctor | recap help
@@ -7,7 +7,7 @@
 
 RECAP_DIR="${RECAP_DIR:-$HOME/Summaries}"
 RECAP_HOME="${RECAP_HOME:-$HOME/.recap}"
-RECAP_VERSION="1.0.0"
+RECAP_VERSION="1.0.1"
 RECAP_MODEL_DEFAULT="gemma4-sum"
 
 # --- which Python runs the address commands ---------------------------
@@ -20,7 +20,7 @@ _recap_py() {   # RECAP_PYTHON if set, else the private environment made by reca
 
 # --- shared prompt -------------------------------------------------
 _recap_prompt() {
-  print -r -- "Summarise the text below. Start with the gist: one sentence that states the main finding or message in plain words and does not list items. Never start with 'Here is a summary'. Then give the main points as short bullets, only as many as needed, never padded, with the central figures inside them. Write the bullets in Markdown, each beginning with '- '. Do not use any headings other than 'Worth noting'. Under 'Worth noting' write only extra facts that are not already in the bullets, each as a full sentence that states a fact; never list bare names, dates or numbers. If there is nothing extra, leave out the heading. Write numbers, percentages and years in digits, never spelled out as words. Match the type of text: for news, who did what, when and why; for market or business reports, the main moves with figures and reasons; for editorials and opinion pieces, what the author argues and why; for circulars, regulations and rulings, lead with what is new, say from when it applies and who must act; for tutorials and explainers, the main tips or ideas; for research, what was studied and found; for a collection of separate stories or ideas, say so in the gist and give one bullet per item, naming who said or did it. Rules: Use only the main article; ignore sidebars, related links, promotions, addresses, signatures, bios and disclaimers. Add no outside facts, adjectives or conclusions. In an editorial, present claims as the author's, and write 'The author wants the Court to set aside the orders' rather than 'The Court set aside the orders'; use 'The editorial argues' only for a newspaper's own editorial. Say exactly who said each thing: never give a speaker's remark to the author, and never give the author's lesson to a speaker. Planned things are planned, not done. Do not link events as cause and effect unless the text does. Keep hedges and the strength of wording. Keep names, figures, dates, roles, teams and comparisons exactly as written, attach each figure only to what the text attaches it to, and do not guess. End after the last point, with no questions or offers."
+  print -r -- "Summarize the text below. Start with the gist: one sentence that states the main finding or message in plain words and does not list items. Never start with 'Here is a summary'. Then give the main points as short bullets, only as many as needed, never padded, with the central figures inside them. Write the bullets in Markdown, each beginning with '- '. Do not use any headings other than 'Worth noting'. Under 'Worth noting' write only extra facts that are not already in the bullets, each as a full sentence that states a fact; never list bare names, dates or numbers. If there is nothing extra, leave out the heading. Write numbers, percentages and years in digits, never spelled out as words. Match the type of text: for news, who did what, when and why; for market or business reports, the main moves with figures and reasons; for editorials and opinion pieces, what the author argues and why; for circulars, regulations and rulings, lead with what is new, say from when it applies and who must act; for tutorials and explainers, the main tips or ideas; for research, what was studied and found; for a collection of separate stories or ideas, say so in the gist and give one bullet per item, naming who said or did it. Rules: Use only the main article; ignore sidebars, related links, promotions, addresses, signatures, bios and disclaimers. Add no outside facts, adjectives or conclusions. In an editorial, present claims as the author's, and write 'The author wants the Court to set aside the orders' rather than 'The Court set aside the orders'; use 'The editorial argues' only for a newspaper's own editorial. Say exactly who said each thing: never give a speaker's remark to the author, and never give the author's lesson to a speaker. Planned things are planned, not done. Do not link events as cause and effect unless the text does. Keep hedges and the strength of wording. Keep names, figures, dates, roles, teams and comparisons exactly as written, attach each figure only to what the text attaches it to, and do not guess. End after the last point, with no questions or offers."
 }
 
 # --- helpers -------------------------------------------------------
@@ -131,7 +131,7 @@ recap() {
   base="$(_recap_prompt)"
 
   case "$mode" in
-    short) base="Summarise the text below in one sentence, then give up to 3 short bullet takeaways in Markdown, each beginning with '- '. Start with the summary itself, never an introduction. Use 'The editorial argues' only for a newspaper's own editorial, and then present the claims as the author's. Say exactly who said each thing. Keep hedges and the strength of wording. Write numbers in digits. Attach each figure only to what the text attaches it to. Use only the main article; ignore related links, sidebars, addresses, signatures and disclaimers. Do not ask me any questions." ;;
+    short) base="Summarize the text below in one sentence, then give up to 3 short bullet takeaways in Markdown, each beginning with '- '. Start with the summary itself, never an introduction. Use 'The editorial argues' only for a newspaper's own editorial, and then present the claims as the author's. Say exactly who said each thing. Keep hedges and the strength of wording. Write numbers in digits. Attach each figure only to what the text attaches it to. Use only the main article; ignore related links, sidebars, addresses, signatures and disclaimers. Do not ask me any questions." ;;
     changes) extra="Special focus for this summary: the text changes an earlier rule or circular. State clearly which clauses or points are new or changed, using their clause numbers, and which are existing or unchanged. Then say who must act and from when. Mention the number and date of the earlier circular only as the one being modified." ;;
     version|-V|--version) print -r -- "Recap $RECAP_VERSION"; return ;;
     help|-h|--help)
@@ -144,10 +144,10 @@ recap() {
   recapall            several articles separated by lines containing only @@@@
   recapc              same as recap, and also copies the summary to the clipboard
   recapmail           short email summary: sender, tasks, deadlines, reply needed
-  recapurl "ADDRESS"  fetch a web article or YouTube captions, or read a PDF (address or file), and summarise (quote it)
+  recapurl "ADDRESS"  fetch a web article or YouTube captions, or read a PDF (address or file), and summarize (quote it)
   recapurl "A" "B"    several addresses, one after another (--single: one file, --separate: one each)
-  recapurls           summarise the addresses typed after it, or every address on the clipboard (one per line)
-  recapsetup          one-time setup: private Python environment and the summarising model
+  recapurls           summarize the addresses typed after it, or every address on the clipboard (one per line)
+  recapsetup          one-time setup: private Python environment and the summarizing model
   recapdoctor         check the whole setup and say what to fix
   recap version       show which version of Recap this is
   RECAP_MODEL=gemma-sum recap    use a different model for one run
@@ -245,14 +245,14 @@ _recap_long_core() {   # $1 = text file, $2 = title, rest = optional focus; summ
     echo "  part $i of $n..." >&2
     print -r -- "--- Part $i ---" >> "$notes"
     ollama run --nowordwrap "${tf[@]}" "$model" \
-"This is one part of a longer document. List everything it contains as short bullets: the facts, figures, names, dates, claims, arguments and quotes. Say exactly who said or did each thing. Keep names and numbers exactly as written and keep hedges such as 'possibly' or 'the best explanation is'. Do not summarise, shorten or add anything, and write no introduction." \
+"This is one part of a longer document. List everything it contains as short bullets: the facts, figures, names, dates, claims, arguments and quotes. Say exactly who said or did each thing. Keep names and numbers exactly as written and keep hedges such as 'possibly' or 'the best explanation is'. Do not summarize, shorten or add anything, and write no introduction." \
       < "$f" >> "$notes"
     print "" >> "$notes"
   done
 
   _recap_msg "  combining..."
   ollama run --nowordwrap "${tf[@]}" "$model" \
-    "$(_recap_prompt) The text below is a set of notes taken in order from a longer document, not the document itself. Summarise what the document says. $*" \
+    "$(_recap_prompt) The text below is a set of notes taken in order from a longer document, not the document itself. Summarize what the document says. $*" \
     < "$notes" | _recap_clean | _recap_dedupe
 
   mkdir -p "$RECAP_DIR"
@@ -659,7 +659,7 @@ print(f"reader={engine}")
 PY
 }
 
-# --- web page: fetch, clean, summarise ------------------------------
+# --- web page: fetch, clean, summarize ------------------------------
 # Exit codes of _recap_fetch: 2 no response, 3 no article text, 4 HTTP error (http=NNN), 8 it is a PDF,
 # 5 redirected to a login page. Other lines on stdout: paywall=1  cutoff=1
 _recap_fetch() {   # $1 = address, $2 = output file
@@ -707,7 +707,7 @@ with open(out, "w", encoding="utf-8") as f:
 if re.search(r'"isAccessibleForFree"\s*:\s*"?false"?', html, re.I):
     print("paywall=1")
 # A cut-off teaser: the text ends mid-sentence AND the page has subscription wording.
-# (A missing final full stop alone is common on free pages, so it is not enough.)
+# (A missing final period alone is common on free pages, so it is not enough.)
 last = text.strip().splitlines()[-1].strip()
 gate = re.search(
     r"already (have an account|a subscriber|a member)|sign up to get access|to continue reading"
@@ -734,7 +734,7 @@ _recap_is_addr() {   # is this argument an address or a PDF file, rather than a 
   return 1
 }
 
-_recap_url_one() {   # one address (web page or YouTube video) + optional mode or focus text; returns 1 if nothing was summarised
+_recap_url_one() {   # one address (web page or YouTube video) + optional mode or focus text; returns 1 if nothing was summarized
   local rc=0 url="$1" tmp info code words title slug srcfile http_status final cutoff=0 paywall=0 src_note is_yt=0 yt_lang yt_gen=0 yt_en=1 min_words=150 is_pdf=0 local_pdf=0 pdf_pages pg=""
   shift
   _RECAP_FIRST_MSG=""
@@ -812,39 +812,39 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
   if (( is_yt )); then
     case $code in
       0) ;;
-      2) _recap_msg "Could not find a video in that link." "Nothing summarised." ;;
-      3) _recap_msg "This video has no captions available." "The owner may have turned them off. recapurl cannot summarise a video without captions." "Nothing summarised." ;;
-      4) _recap_msg "YouTube says the video is unavailable." "It may be private, removed, or not viewable in your region." "Nothing summarised." ;;
-      5) _recap_msg "YouTube wants a sign-in or age check for this video." "Nothing summarised." ;;
-      6) _recap_msg "YouTube blocked the request." "This sometimes clears after a while or on another network." "You can also open the video, choose Show transcript, copy the text and use recap." "Nothing summarised." ;;
-      *) _recap_msg "Could not read the captions ($(print -r -- "$info" | sed -n 's/^error=//p' | head -1))." "Nothing summarised." ;;
+      2) _recap_msg "Could not find a video in that link." "Nothing summarized." ;;
+      3) _recap_msg "This video has no captions available." "The owner may have turned them off. recapurl cannot summarize a video without captions." "Nothing summarized." ;;
+      4) _recap_msg "YouTube says the video is unavailable." "It may be private, removed, or not viewable in your region." "Nothing summarized." ;;
+      5) _recap_msg "YouTube wants a sign-in or age check for this video." "Nothing summarized." ;;
+      6) _recap_msg "YouTube blocked the request." "This sometimes clears after a while or on another network." "You can also open the video, choose Show transcript, copy the text and use recap." "Nothing summarized." ;;
+      *) _recap_msg "Could not read the captions ($(print -r -- "$info" | sed -n 's/^error=//p' | head -1))." "Nothing summarized." ;;
     esac
     [[ $code != 0 ]] && { rm -f "$tmp"; return 1; }
   elif (( is_pdf )); then
     case $code in
       0) ;;
-      2) if (( local_pdf )); then _recap_msg "Could not read that file." "Nothing summarised."
-         else _recap_msg "No response from the site." "Possible causes: a network, security-certificate or timeout problem." "Nothing summarised."; fi ;;
-      3) _recap_msg "No readable text in this PDF$pg." "It is probably scanned pages, which are images. recapurl cannot read those." "Nothing summarised." ;;
+      2) if (( local_pdf )); then _recap_msg "Could not read that file." "Nothing summarized."
+         else _recap_msg "No response from the site." "Possible causes: a network, security-certificate or timeout problem." "Nothing summarized."; fi ;;
+      3) _recap_msg "No readable text in this PDF$pg." "It is probably scanned pages, which are images. recapurl cannot read those." "Nothing summarized." ;;
       4) case "$http_status" in
            401|403|429) _recap_msg "The site answered with HTTP $http_status instead of the PDF." "That usually means it blocks automated downloads or needs a login." "Download the file in your browser and run recapurl on the saved file." ;;
            404|410) _recap_msg "The site answered with HTTP $http_status instead of the PDF." "That usually means the address is wrong or the file was removed." ;;
            *) _recap_msg "The site answered with HTTP $http_status instead of the PDF." "Try again later, or download it in your browser and run recapurl on the saved file." ;;
          esac ;;
-      5) _recap_msg "This PDF is password-protected." "Nothing summarised." ;;
-      6) _recap_msg "That PDF is larger than ${RECAP_PDF_MAX_MB:-30} MB." "Nothing summarised. To raise the limit:" "  RECAP_PDF_MAX_MB=60 recapurl \"$url\"" ;;
-      9) _recap_msg "That link did not return a PDF." "It may be a web page or a login page." "Nothing summarised." ;;
+      5) _recap_msg "This PDF is password-protected." "Nothing summarized." ;;
+      6) _recap_msg "That PDF is larger than ${RECAP_PDF_MAX_MB:-30} MB." "Nothing summarized. To raise the limit:" "  RECAP_PDF_MAX_MB=60 recapurl \"$url\"" ;;
+      9) _recap_msg "That link did not return a PDF." "It may be a web page or a login page." "Nothing summarized." ;;
       *) if [[ "$info" == *error=DependencyError* ]]; then
            _recap_msg "This PDF is encrypted in a way the basic PDF reader cannot open." "Run this, then try again:" "  recapsetup"
          else
-           _recap_msg "Could not read the PDF ($(print -r -- "$info" | sed -n 's/^error=//p' | head -1))." "The file may be damaged. Nothing summarised."
+           _recap_msg "Could not read the PDF ($(print -r -- "$info" | sed -n 's/^error=//p' | head -1))." "The file may be damaged. Nothing summarized."
          fi ;;
     esac
     [[ $code != 0 ]] && { rm -f "$tmp"; return 1; }
   else
   case $code in
     0) ;;
-    2) _recap_msg "No response from the site." "Possible causes: a network, security-certificate or timeout problem." "Nothing summarised."
+    2) _recap_msg "No response from the site." "Possible causes: a network, security-certificate or timeout problem." "Nothing summarized."
        rm -f "$tmp"; return 1 ;;
     4) case "$http_status" in
          401|403|429) _recap_msg "The site answered with HTTP $http_status instead of the page." "That usually means it blocks automated downloads or needs a login." "Copy the text and use recap." ;;
@@ -852,11 +852,11 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
          *) _recap_msg "The site answered with HTTP $http_status instead of the page." "Try again later, or copy the text and use recap." ;;
        esac
        rm -f "$tmp"; return 1 ;;
-    5) _recap_msg "The site redirected to a login or subscribe page." "  $final" "Nothing summarised."
+    5) _recap_msg "The site redirected to a login or subscribe page." "  $final" "Nothing summarized."
        rm -f "$tmp"; return 1 ;;
-    3) _recap_msg "No article text found on that page." "It may need a login or be built with scripts." "Nothing summarised."
+    3) _recap_msg "No article text found on that page." "It may need a login or be built with scripts." "Nothing summarized."
        rm -f "$tmp"; return 1 ;;
-    *) _recap_msg "Could not read the page (error $code)." "Nothing summarised."
+    *) _recap_msg "Could not read the page (error $code)." "Nothing summarized."
        rm -f "$tmp"; return 1 ;;
   esac
   fi
@@ -871,25 +871,25 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
   if [[ "$RECAP_URL_FORCE" != 1 ]]; then
     if (( words < ${RECAP_URL_MIN:-$min_words} )); then
       if (( is_yt )); then
-        _recap_msg "Only $words words of captions came back." "The video may be very short or mostly music." "Nothing summarised."
+        _recap_msg "Only $words words of captions came back." "The video may be very short or mostly music." "Nothing summarized."
       elif (( is_pdf )); then
-        _recap_msg "Only $words words of text came back." "The PDF may be mostly images or very short." "Nothing summarised."
+        _recap_msg "Only $words words of text came back." "The PDF may be mostly images or very short." "Nothing summarized."
       else
-        _recap_msg "Only $words words came back." "The page may be paywalled, need a login or be mostly scripts." "Nothing summarised."
+        _recap_msg "Only $words words came back." "The page may be paywalled, need a login or be mostly scripts." "Nothing summarized."
       fi
       _recap_msg "Extracted text saved so you can look:" "  $srcfile"
       rm -f "$tmp"; return 1
     fi
     if (( words > ${RECAP_URL_MAX:-10000} )); then
-      _recap_msg "That is $words words: too long to summarise reliably in one go." "The part-by-part method is only tested up to about 6,600 words, and past roughly 10,000 words its notes probably no longer fit in the model's memory."
+      _recap_msg "That is $words words: too long to summarize reliably in one go." "The part-by-part method is only tested up to about 6,600 words, and past roughly 10,000 words its notes probably no longer fit in the model's memory."
       _recap_msg "Text saved so you can copy one chapter or section and use recaplong:" "  $srcfile"
       _recap_msg "To try the whole text anyway, run:" "  RECAP_URL_MAX=$((words + 1000)) recapurl \"$url\""
       rm -f "$tmp"; return 1
     fi
     if (( paywall )); then
-      _recap_msg "Stopped: the page marks its article as paywalled (members only)." "What came back is probably a teaser or a subscription notice." "Nothing summarised."
+      _recap_msg "Stopped: the page marks its article as paywalled (members only)." "What came back is probably a teaser or a subscription notice." "Nothing summarized."
       _recap_msg "Extracted text saved so you can look:" "  $srcfile"
-      _recap_msg "To summarise it anyway, run:" "  RECAP_URL_FORCE=1 recapurl \"$url\""
+      _recap_msg "To summarize it anyway, run:" "  RECAP_URL_FORCE=1 recapurl \"$url\""
       rm -f "$tmp"; return 1
     fi
   fi
@@ -924,7 +924,7 @@ _recap_url_one() {   # one address (web page or YouTube video) + optional mode o
   if (( words > ${RECAP_LONG_WORDS:-4000} )); then
     case "$1" in
       short|changes)
-        _recap_msg "'$1' only applies under ${RECAP_LONG_WORDS:-4000} words." "Summarising in parts without it."
+        _recap_msg "'$1' only applies under ${RECAP_LONG_WORDS:-4000} words." "Summarizing in parts without it."
         shift ;;
     esac
     RECAP_NO_LEAD=1 RECAP_INPUT="$tmp" RECAP_SOURCE="$src_note" recaplong "$@" || rc=$?
@@ -957,7 +957,7 @@ recapurl() {
   while [[ "$1" == --single || "$1" == --separate ]]; do mode="${1#--}"; shift; done
   if [[ -z "$1" || "$1" == help || "$1" == -h || "$1" == --help ]]; then
     _recap_msg -b "Usage: recapurl [--single | --separate] \"ADDRESS\" [\"ADDRESS\" ...] [short | changes | \"focus text\"]" "Put each address in quotes (addresses with ? or & break otherwise)."
-    _recap_msg "Fetches a web article, strips menus and ads, and summarises it." "For a YouTube video it reads the captions. A PDF (an address or a file on this Mac) is read too. Not for other audio or video." "Several are summarised one after another; extra ones must start with https:// or www., or be a .pdf file." "For several addresses, --single saves all summaries in one file and --separate gives each its own." "Without a flag it asks (or set RECAP_BATCH=single or separate). With one address the flags do nothing." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
+    _recap_msg "Fetches a web article, strips menus and ads, and summarizes it." "For a YouTube video it reads the captions. A PDF (an address or a file on this Mac) is read too. Not for other audio or video." "Several are summarized one after another; extra ones must start with https:// or www., or be a .pdf file." "For several addresses, --single saves all summaries in one file and --separate gives each its own." "Without a flag it asks (or set RECAP_BATCH=single or separate). With one address the flags do nothing." "To skip the paywall and short-text checks:" "  RECAP_URL_FORCE=1 recapurl \"ADDRESS\""
     [[ -z "$1" ]] && return 1
     return 0
   fi
@@ -999,7 +999,7 @@ recapurl() {
         print -r -- "# $ok link summaries, $(date +%Y-%m-%d)"; print ""
         cat "$coll"
         if (( ${#failed} )); then
-          print ""; print -r -- "## Not summarised"; print ""
+          print ""; print -r -- "## Not summarized"; print ""
           for ((j=1; j<=${#failed}; j++)); do print -r -- "- ${failed[j]}"; print -r -- "  ${reasons[j]}"; done
         fi
       } > "$final"
@@ -1011,14 +1011,14 @@ recapurl() {
 
   if (( ${#failed} )); then
     for ((j=1; j<=${#failed}; j++)); do lines+=("  ${failed[j]}" "    ${reasons[j]}"); done
-    _recap_msg -b "Finished: $ok of ${#urls} summarised." "Not summarised:" "${lines[@]}"
+    _recap_msg -b "Finished: $ok of ${#urls} summarized." "Not summarized:" "${lines[@]}"
   else
-    _recap_msg -b "Finished: all ${#urls} summarised."
+    _recap_msg -b "Finished: all ${#urls} summarized."
   fi
   (( ${#failed} == 0 ))
 }
 
-# recapurls [--single | --separate] ["ADDRESS" ...] ["focus text"]: summarise the addresses typed after it, or, with none,
+# recapurls [--single | --separate] ["ADDRESS" ...] ["focus text"]: summarize the addresses typed after it, or, with none,
 # every web address found on the clipboard (one per line, anything else is ignored)
 recapurls() {
   local -a urls flags
@@ -1045,8 +1045,8 @@ _recap_ensure_ollama() {   # makes sure the Ollama server is running, and starts
   ollama list >/dev/null 2>&1 && return 0
   local i
   _recap_msg -b "Ollama is not running. Starting it now..." "This can take a few seconds."
-  if [[ -d /Applications/Ollama.app || -d "$HOME/Applications/Ollama.app" ]] && open -g -a Ollama >/dev/null 2>&1; then
-    :   # the Ollama app starts the server in the background
+  if [[ -d /Applications/Ollama.app || -d "$HOME/Applications/Ollama.app" ]] && open -g -j -a Ollama >/dev/null 2>&1; then
+    :   # the Ollama app starts the server in the background (-j launches it hidden)
   else
     nohup ollama serve >/dev/null 2>&1 &!
   fi
@@ -1073,7 +1073,7 @@ _recap_model_installed() {   # $1 = model name, $2 = the output of `ollama list`
 }
 
 # recapsetup: one command to get everything ready. It creates (or updates) Recap's private Python environment in
-# $RECAP_HOME/venv for the address commands, and builds the summarising model in Ollama if it is missing.
+# $RECAP_HOME/venv for the address commands, and builds the summarizing model in Ollama if it is missing.
 # Your own Python is not touched. Run it again to upgrade the packages. recapsetup --no-model skips the model.
 recapsetup() {
   local base="${RECAP_BASE_PYTHON:-python3}" venv="$RECAP_HOME/venv" out ver list modelfile
@@ -1114,18 +1114,18 @@ recapsetup() {
   fi
   _recap_msg "The Python packages are ready."
 
-  # the summarising model (one model does every job)
+  # the summarizing model (one model does every job)
   if (( no_model )); then
     :
   elif ! command -v ollama >/dev/null 2>&1; then
-    _recap_msg "Ollama is not installed, so the summarising model was not set up." "Install it from https://ollama.com (download it and open the app), then run recapsetup again."
+    _recap_msg "Ollama is not installed, so the summarizing model was not set up." "Install it from https://ollama.com (download it and open the app), then run recapsetup again."
     todo="install Ollama, then run recapsetup again"
   elif ! _recap_ensure_ollama; then
     todo="start Ollama, then run recapsetup again"
   elif list=$(ollama list 2>/dev/null) && _recap_model_installed "$RECAP_MODEL_DEFAULT" "$list"; then
-    _recap_msg "The summarising model ($RECAP_MODEL_DEFAULT) is already set up."
+    _recap_msg "The summarizing model ($RECAP_MODEL_DEFAULT) is already set up."
   else
-    _recap_msg "Setting up the summarising model." "This downloads about 4.6 GB, once. Keep the Mac awake and connected to the internet." "Press Control+C to cancel; running recapsetup again resumes."
+    _recap_msg "Setting up the summarizing model." "This downloads about 4.6 GB, once. Keep the Mac awake and connected to the internet." "Press Control+C to cancel; running recapsetup again resumes."
     if ! ollama pull gemma4:e2b; then
       _recap_msg "The model download failed." "Check your internet connection, then run recapsetup again."
       return 1
@@ -1138,7 +1138,7 @@ recapsetup() {
       return 1
     fi
     rm -f "$modelfile"
-    _recap_msg "The summarising model ($RECAP_MODEL_DEFAULT) is ready."
+    _recap_msg "The summarizing model ($RECAP_MODEL_DEFAULT) is ready."
   fi
 
   if [[ -n "$todo" ]]; then
@@ -1244,5 +1244,5 @@ recapmail() {
   _recap_ensure_ollama || return 1
   tf=(${=$(_recap_flags "$model")})
   _recap_input | tr -d '\r' | ollama run --nowordwrap "${tf[@]}" "$model" \
-"Summarise the email below in 3 lines. Then list: who sent it and what they want from me, any tasks or deadlines, and whether a reply is needed. If there are no tasks or deadlines, write None. Use only facts in the email. Do not ask me questions."
+"Summarize the email below in 3 lines. Then list: who sent it and what they want from me, any tasks or deadlines, and whether a reply is needed. If there are no tasks or deadlines, write None. Use only facts in the email. Do not ask me questions."
 }

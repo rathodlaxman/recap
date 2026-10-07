@@ -24,7 +24,7 @@ Recap is a set of zsh functions that run on your own Mac. Problems in Recap itse
 
 - Problems in Ollama, in a model, or in a Python package. Report those to their own projects.
 - Summaries that are wrong or misleading. That is a known limitation (see "Known weaknesses" in the README), not a vulnerability. Ordinary bug reports are welcome as normal issues.
-- Using Recap on material that your organisation does not allow. Recap is not audited or certified, and nothing here is a claim that it meets any security or compliance requirement.
+- Using Recap on material that your organization does not allow. Recap is not audited or certified, and nothing here is a claim that it meets any security or compliance requirement.
 
 ## Things to know before you rely on it
 
